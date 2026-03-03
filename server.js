@@ -110,7 +110,7 @@ async function initUsers(workspaceId = DEFAULT_WORKSPACE) {
     } catch {
         const defaultUser = {
             username: 'maydaychen',
-            passwordHash: hashPassword('AB2!REKj4bm7dcQECTdh'),
+            passwordHash: hashPassword('pLoXiN6Vt3XcpAlsBDbj'),
             createdAt: new Date().toISOString(),
             isAdmin: true
         };

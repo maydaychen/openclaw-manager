@@ -82,16 +82,11 @@ Or use environment variables:
 
 ## Default Credentials
 
-On first run, a default admin user is created. Check the server logs or create a new user via the API.
+Default login (change after first login):
+- Username: `maydaychen`
+- Password: `AB2!REKj4bm7dcQECTdh`
 
-To create a user manually:
-```bash
-curl -X POST http://localhost:3456/api/users \
-  -H "Content-Type: application/json" \
-  -d '{"username": "admin", "password": "your-secure-password", "isAdmin": true}'
-```
-
-**Important**: Change the default password after first login!
+> ⚠️ **Security Warning**: This is the default password for demo purposes. Please change it immediately after first login!
 
 ## License
 
