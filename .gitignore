@@ -1,0 +1,35 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Config files with sensitive data
+config.json
+users.json
+
+# Logs
+*.log
+logs/
+
+# Backup files
+backups/
+*.backup.*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Keys and tokens
+*.pem
+*.key
+token.pickle

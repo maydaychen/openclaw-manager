@@ -1,0 +1,16 @@
+{
+  "database": {
+    "host": "your-mariadb-host",
+    "user": "your-db-user",
+    "password": "your-db-password",
+    "database": "openclaw_manager"
+  },
+  "aliyun": {
+    "accessKeyId": "your-access-key-id",
+    "accessKeySecret": "your-access-key-secret",
+    "region": "cn-hangzhou"
+  },
+  "jwt": {
+    "secret": "your-jwt-secret-key"
+  }
+}

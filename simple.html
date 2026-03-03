@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>OpenClaw Manager</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;500;600;700&display=swap');
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+            min-height: 100vh;
+        }
+        
+        :root {
+            --accent-blue: #0078D4;
+            --accent-light: #40E0D0;
+            --bg-card: rgba(255, 255, 255, 0.85);
+            --shadow-soft: 0 8px 32px rgba(0, 0, 0, 0.08);
+            --shadow-hover: 0 12px 48px rgba(0, 0, 0, 0.12);
+        }
+        
+        .app-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+        
+        .header {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px 32px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-soft);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #1a1a1a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--accent-blue), var(--accent-light));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+        
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 120, 212, 0.1);
+            border-radius: 20px;
+            font-size: 14px;
+            color: var(--accent-blue);
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #107C10;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 24px;
+        }
+        
+        .card {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            box-shadow: var(--shadow-hover);
+            transform: translateY(-2px);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #616161;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .card-value {
+            font-size: 36px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-top: 8px;
+        }
+        
+        .card-subtitle {
+            font-size: 14px;
+            color: #757575;
+            margin-top: 4px;
+        }
+        
+        .icon-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .icon-blue { background: rgba(0, 120, 212, 0.1); color: var(--accent-blue); }
+        .icon-green { background: rgba(16, 124, 16, 0.1); color: #107C10; }
+        .icon-purple { background: rgba(123, 31, 162, 0.1); color: #7B1FA2; }
+        .icon-orange { background: rgba(255, 152, 0, 0.1); color: #FF9800; }
+        
+        .section {
+            background: var(--bg-card);
+            backdrop-filter: blur(20px);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-soft);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: var(--accent-blue);
+            color: white;
+        }
+        
+        .btn-primary:hover { background: #006CBE; }
+        
+        .btn-danger {
+            background: #D13438;
+            color: white;
+        }
+        
+        .btn-danger:hover { background: #B92D31; }
+        
+        .btn-secondary {
+            background: #F3F2F1;
+            color: #323130;
+        }
+        
+        .btn-secondary:hover { background: #E1DFDD; }
+        
+        .file-tree { font-size: 14px; }
+        
+        .file-item {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        
+        .file-item:hover { background: rgba(0, 120, 212, 0.05); }
+        
+        .file-icon { margin-right: 10px; font-size: 16px; }
+        .file-name { flex: 1; color: #323130; }
+        .file-meta { font-size: 12px; color: #605E5C; margin-right: 12px; }
+        
+        .file-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: opacity 0.15s ease;
+        }
+        
+        .file-item:hover .file-actions { opacity: 1; }
+        
+        .action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s ease;
+        }
+        
+        .action-btn:hover {
+            background: rgba(209, 52, 56, 0.1);
+            color: #D13438;
+        }
+        
+        .directory-children {
+            margin-left: 24px;
+            border-left: 2px solid #E1DFDD;
+            padding-left: 8px;
+        }
+        
+        .cron-list { display: flex; flex-direction: column; gap: 12px; }
+        
+        .cron-item {
+            display: flex;
+            align-items: center;
+            padding: 16px;
+            background: #FAF9F8;
+            border-radius: 12px;
+            border: 1px solid #E1DFDD;
+            transition: all 0.2s ease;
+        }
+        
+        .cron-item:hover {
+            border-color: var(--accent-blue);
+            background: white;
+        }
+        
+        .cron-info { flex: 1; }
+        .cron-name { font-weight: 600; color: #1a1a1a; margin-bottom: 4px; }
+        
+        .cron-schedule {
+            font-size: 13px;
+            color: #605E5C;
+            font-family: monospace;
+            background: #F3F2F1;
+            padding: 2px 8px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+        
+        .cron-status {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            margin-right: 16px;
+        }
+        
+        .status-enabled { background: rgba(16, 124, 16, 0.1); color: #107C10; }
+        .status-disabled { background: rgba(97, 97, 97, 0.1); color: #616161; }
+        .cron-actions { display: flex; gap: 8px; }
+        
+        .empty-state {
+            text-align: center;
+            padding: 48px;
+            color: #605E5C;
+        }
+        
+        .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
+        
+        .update-time {
+            font-size: 13px;
+            color: #605E5C;
+        }
+        
+        #error-msg {
+            color: #D13438;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="header">
+            <h1>
+                <div class="header-icon">🦞</div>
+                OpenClaw Manager
+            </h1>
+            <div style="display: flex; align-items: center; gap: 16px;">
+                <span id="last-update" class="update-time">加载中...</span>
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span>系统运行中</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Dashboard Stats -->
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">活跃会话</span>
+                    <div class="icon-circle icon-blue">💬</div>
+                </div>
+                <div class="card-value" id="sessions-active">-</div>
+                <div class="card-subtitle" id="sessions-total">总计 - 个会话</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">定时任务</span>
+                    <div class="icon-circle icon-purple">⏰</div>
+                </div>
+                <div class="card-value" id="crons-count">-</div>
+                <div class="card-subtitle">已配置的任务数量</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">网关状态</span>
+                    <div class="icon-circle icon-green">🌐</div>
+                </div>
+                <div class="card-value" id="gateway-status" style="font-size: 24px; margin-top: 16px;">-</div>
+                <div class="card-subtitle">Gateway 服务状态</div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <span class="card-title">磁盘使用</span>
+                    <div class="icon-circle icon-orange">💾</div>
+                </div>
+                <div class="card-value" id="disk-percent" style="font-size: 24px; margin-top: 16px;">-</div>
+                <div class="card-subtitle" id="disk-detail"></div>
+            </div>
+        </div>
+
+        <div id="error-msg"></div>
+
+        <!-- Files Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">📁 工作区文件</h2>
+                <button class="btn btn-secondary" onclick="fetchFiles()">🔄 刷新</button>
+            </div>
+            <div id="files-list" class="file-tree">
+                <div class="empty-state">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cron Jobs Section -->
+        <section class="section">
+            <div class="section-header">
+                <h2 class="section-title">⏰ 定时任务</h2>
+                <button class="btn btn-secondary" onclick="fetchCrons()">🔄 刷新</button>
+            </div>
+            <div id="crons-list">
+                <div class="empty-state">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="app-simple.js?v=1"></script>
+</body>
+</html>
