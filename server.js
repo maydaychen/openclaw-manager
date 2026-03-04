@@ -52,7 +52,8 @@ app.get('/', (req, res) => {
 });
 
 // Multiple Workspaces Configuration
-const WORKSPACES = {
+// Static workspaces (fallback)
+const STATIC_WORKSPACES = {
     'default': {
         name: 'Default Workspace',
         path: '/home/chenyi/.openclaw/workspace',
@@ -65,12 +66,80 @@ const WORKSPACES = {
     }
 };
 
+// Dynamic workspaces - will be populated from openclaw agents list
+let DYNAMIC_WORKSPACES = {};
+
+// Load workspaces from openclaw agents list
+async function loadDynamicWorkspaces() {
+    try {
+        const { exec } = require('child_process');
+        const { stdout } = await new Promise((resolve, reject) => {
+            exec('/home/chenyi/.npm-global/bin/openclaw agents list 2>/dev/null', (error, stdout) => {
+                if (error) reject(error);
+                else resolve({ stdout });
+            });
+        });
+        
+        // Parse agents list to extract workspaces
+        const lines = stdout.split('\n');
+        const workspaces = {};
+        let currentWorkspace = null;
+        
+        for (const line of lines) {
+            if (line.startsWith('- ')) {
+                // New agent found
+                const agentName = line.substring(2).split(' ')[0];
+                currentWorkspace = agentName;
+            } else if (currentWorkspace && line.includes('Workspace:')) {
+                let wsPath = line.split('Workspace:')[1].trim();
+                
+                // Expand ~ to home directory
+                if (wsPath.startsWith('~')) {
+                    wsPath = wsPath.replace('~', '/home/chenyi');
+                }
+                
+                if (wsPath && wsPath !== '-' && !workspaces[wsPath]) {
+                    // Extract workspace folder name from path
+                    let wsName = wsPath.replace('/home/chenyi/.openclaw/', '');
+                    
+                    // Special case: 'workspace' should be 'default'
+                    if (wsName === 'workspace') {
+                        wsName = 'default';
+                    }
+                    
+                    workspaces[wsName] = {
+                        name: wsName === 'default' ? 'Default Workspace' : wsName.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+                        path: wsPath,
+                        description: `Workspace for ${currentWorkspace} agent`,
+                        agent: currentWorkspace
+                    };
+                }
+            }
+        }
+        
+        DYNAMIC_WORKSPACES = workspaces;
+        console.log('✅ Loaded dynamic workspaces:', Object.keys(DYNAMIC_WORKSPACES));
+        console.log('📂 Total workspaces:', Object.keys(getAllWorkspaces()).length);
+    } catch (error) {
+        console.error('❌ Failed to load dynamic workspaces:', error.message);
+    }
+}
+
+// Get all workspaces (static + dynamic)
+function getAllWorkspaces() {
+    return { ...STATIC_WORKSPACES, ...DYNAMIC_WORKSPACES };
+}
+
+// Initialize dynamic workspaces on startup
+loadDynamicWorkspaces();
+
 // Default workspace
 const DEFAULT_WORKSPACE = 'default';
 
 // Helper to get current workspace path
 function getWorkspacePath(workspaceId) {
-    const ws = WORKSPACES[workspaceId] || WORKSPACES[DEFAULT_WORKSPACE];
+    const workspaces = getAllWorkspaces();
+    const ws = workspaces[workspaceId] || workspaces[DEFAULT_WORKSPACE];
     return ws.path;
 }
 
@@ -85,7 +154,7 @@ function getUsersFile(workspaceId) {
 }
 
 // Legacy support - default workspace paths
-const WORKSPACE_PATH = WORKSPACES.default.path;
+const WORKSPACE_PATH = STATIC_WORKSPACES.default.path;
 const DATA_PATH = path.join(WORKSPACE_PATH, 'openclaw-manager', 'data');
 const USERS_FILE = path.join(DATA_PATH, 'users.json');
 
@@ -266,13 +335,24 @@ app.delete('/api/users/:username', authMiddleware, async (req, res) => {
 
 // Get available workspaces
 app.get('/api/workspaces', authMiddleware, (req, res) => {
-    const workspaces = Object.entries(WORKSPACES).map(([id, ws]) => ({
+    const workspaces = Object.entries(getAllWorkspaces()).map(([id, ws]) => ({
         id,
         name: ws.name,
         description: ws.description,
-        path: ws.path
+        path: ws.path,
+        agent: ws.agent || null
     }));
     res.json({ success: true, workspaces });
+});
+
+// Refresh workspaces from openclaw
+app.post('/api/workspaces/refresh', authMiddleware, async (req, res) => {
+    await loadDynamicWorkspaces();
+    res.json({ 
+        success: true, 
+        workspaces: Object.keys(getAllWorkspaces()),
+        message: 'Workspace list refreshed'
+    });
 });
 
 // Optimized status endpoint with caching and parallel execution
@@ -457,48 +537,126 @@ app.post('/api/crons/:id/toggle', authMiddleware, async (req, res) => {
 // Skills management API
 app.get('/api/skills', authMiddleware, async (req, res) => {
     try {
-        const workspaceId = req.query.workspace || DEFAULT_WORKSPACE;
-        const workspacePath = getWorkspacePath(workspaceId);
-        const skillsPath = path.join(workspacePath, 'skills');
-        const entries = await fs.readdir(skillsPath, { withFileTypes: true });
-        const skills = [];
+        const skillMap = new Map(); // To track unique skills by name
+        const workspaces = getAllWorkspaces();
         
-        for (const entry of entries) {
-            if (!entry.isDirectory()) continue;
+        // 1. First scan global skills directory: /home/chenyi/.openclaw/skills
+        const globalSkillsPath = '/home/chenyi/.openclaw/skills';
+        try {
+            const entries = await fs.readdir(globalSkillsPath, { withFileTypes: true });
             
-            const skillName = entry.name;
-            const skillMdPath = path.join(skillsPath, skillName, 'SKILL.md');
-            
-            let description = '暂无描述';
-            let version = '-';
-            let author = '-';
-            
-            try {
-                const content = await fs.readFile(skillMdPath, 'utf8');
-                // Extract description from first paragraph after title
-                const descMatch = content.match(/#\s+.+\n+([^#\n].*?)(?=\n#{1,2}\s|\n*$)/s);
-                if (descMatch) {
-                    description = descMatch[1].trim().substring(0, 200);
+            for (const entry of entries) {
+                if (!entry.isDirectory()) continue;
+                
+                const skillName = entry.name;
+                const skillMdPath = path.join(globalSkillsPath, skillName, 'SKILL.md');
+                
+                let description = '暂无描述';
+                let version = '-';
+                let author = '-';
+                
+                try {
+                    const content = await fs.readFile(skillMdPath, 'utf8');
+                    
+                    // Try to extract from YAML front matter first
+                    const frontMatterMatch = content.match(/^---\s*\n([\s\S]*?)\n---\s*\n/);
+                    if (frontMatterMatch) {
+                        const frontMatter = frontMatterMatch[1];
+                        
+                        // Extract description from front matter
+                        const descMatch = frontMatter.match(/description[:\s]+(.+)/i);
+                        if (descMatch) {
+                            description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+                        }
+                        
+                        // Extract version
+                        const versionMatch = frontMatter.match(/version[:\s]+([\d.]+)/i);
+                        if (versionMatch) version = versionMatch[1];
+                        
+                        // Extract author
+                        const authorMatch = frontMatter.match(/author[:\s]+(.+)/i);
+                        if (authorMatch) author = authorMatch[1].trim().replace(/^["']|["']$/g, '');
+                    }
+                    
+                    // Fallback: extract from markdown content if no front matter
+                    if (description === '暂无描述') {
+                        const contentDescMatch = content.match(/#\s+.+\n+([^#\n].*?)(?=\n#{1,2}\s|\n*$)/s);
+                        if (contentDescMatch) {
+                            description = contentDescMatch[1].trim().substring(0, 200);
+                        }
+                    }
+                } catch (e) {
+                    // SKILL.md not found or error reading
                 }
-                // Try to find version
-                const versionMatch = content.match(/version[:\s]+([\d.]+)/i);
-                if (versionMatch) version = versionMatch[1];
-                // Try to find author
-                const authorMatch = content.match(/author[:\s]+(.+)/i);
-                if (authorMatch) author = authorMatch[1].trim();
-            } catch (e) {
-                // SKILL.md not found or error reading
+                
+                // Global skills from ~/.openclaw/skills have highest priority
+                skillMap.set(skillName, {
+                    name: skillName,
+                    description,
+                    version,
+                    author,
+                    path: `~/.openclaw/skills/${skillName}`,
+                    scope: 'global',
+                    scopeName: '全局 (~/.openclaw)',
+                    workspace: 'global'
+                });
             }
-            
-            skills.push({
-                name: skillName,
-                description,
-                version,
-                author,
-                path: `skills/${skillName}`
-            });
+        } catch (error) {
+            console.error('Failed to scan global skills:', error.message);
         }
         
+        // 2. Then scan workspace skills
+        for (const [workspaceId, workspace] of Object.entries(workspaces)) {
+            const skillsPath = path.join(workspace.path, 'skills');
+            
+            try {
+                const entries = await fs.readdir(skillsPath, { withFileTypes: true });
+                
+                for (const entry of entries) {
+                    if (!entry.isDirectory()) continue;
+                    
+                    const skillName = entry.name;
+                    const skillMdPath = path.join(skillsPath, skillName, 'SKILL.md');
+                    
+                    let description = '暂无描述';
+                    let version = '-';
+                    let author = '-';
+                    
+                    try {
+                        const content = await fs.readFile(skillMdPath, 'utf8');
+                        const descMatch = content.match(/#\s+.+\n+([^#\n].*?)(?=\n#{1,2}\s|\n*$)/s);
+                        if (descMatch) description = descMatch[1].trim().substring(0, 200);
+                        
+                        const versionMatch = content.match(/version[:\s]+([\d.]+)/i);
+                        if (versionMatch) version = versionMatch[1];
+                        
+                        const authorMatch = content.match(/author[:\s]+(.+)/i);
+                        if (authorMatch) author = authorMatch[1].trim();
+                    } catch (e) {}
+                    
+                    // Only add if not already in global skills
+                    if (!skillMap.has(skillName)) {
+                        const scope = workspaceId === 'default' ? 'workspace' : 'workspace';
+                        const scopeName = workspaceId === 'default' ? 'Default Workspace' : workspace.name;
+                        
+                        skillMap.set(skillName, {
+                            name: skillName,
+                            description,
+                            version,
+                            author,
+                            path: `skills/${skillName}`,
+                            scope,
+                            scopeName,
+                            workspace: workspaceId
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error(`Failed to scan skills in workspace ${workspaceId}:`, error.message);
+            }
+        }
+        
+        const skills = Array.from(skillMap.values());
         res.json({ success: true, skills: skills.sort((a, b) => a.name.localeCompare(b.name)) });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -679,13 +837,60 @@ app.post('/api/backups/create', authMiddleware, async (req, res) => {
     }
 });
 
-// Agents API - get session info from openclaw
+// Agents API - get available agents (from openclaw agents list)
+app.get('/api/agents/list', authMiddleware, async (req, res) => {
+    try {
+        const { stdout } = await execAsync('/home/chenyi/.npm-global/bin/openclaw agents list 2>/dev/null || echo ""');
+        
+        // Parse the text output to extract agent info
+        const agents = [];
+        const lines = stdout.split('\n');
+        let currentAgent = null;
+        
+        for (const line of lines) {
+            if (line.startsWith('- ')) {
+                // New agent found
+                if (currentAgent) {
+                    agents.push(currentAgent);
+                }
+                const name = line.substring(2).split(' ')[0];
+                currentAgent = {
+                    id: name,
+                    name: name,
+                    isDefault: line.includes('(default)'),
+                    model: '',
+                    workspace: '',
+                    status: 'unknown'
+                };
+            } else if (currentAgent && line.includes('Identity:')) {
+                currentAgent.identity = line.split('Identity:')[1].trim();
+            } else if (currentAgent && line.includes('Workspace:')) {
+                currentAgent.workspace = line.split('Workspace:')[1].trim();
+            } else if (currentAgent && line.includes('Model:')) {
+                currentAgent.model = line.split('Model:')[1].trim();
+            } else if (currentAgent && line.includes('Routing rules:')) {
+                currentAgent.routingRules = parseInt(line.split('Routing rules:')[1].trim());
+            }
+        }
+        
+        // Don't forget the last agent
+        if (currentAgent) {
+            agents.push(currentAgent);
+        }
+        
+        res.json({ success: true, agents });
+    } catch (error) {
+        console.error('Agents list API error:', error.message);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Agents API - get active sessions
 app.get('/api/agents', authMiddleware, async (req, res) => {
     try {
         // Get sessions list from openclaw
         let sessions = [];
         try {
-            // Use shell to ensure proper environment
             const { stdout } = await execAsync('/home/chenyi/.npm-global/bin/openclaw sessions --json 2>/dev/null || echo "{\"sessions\":[]}"');
             const data = JSON.parse(stdout);
             sessions = data.sessions || [];
@@ -713,6 +918,29 @@ app.get('/api/agents', authMiddleware, async (req, res) => {
         
         res.json({ success: true, agents });
     } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Spawn new session with specific agent
+app.post('/api/agents/spawn', authMiddleware, async (req, res) => {
+    try {
+        const { agentId, task, mode = 'run', runtime = 'subagent' } = req.body;
+        
+        if (!agentId || !task) {
+            return res.status(400).json({ success: false, error: 'agentId and task are required' });
+        }
+        
+        const command = `${OPENCLAW_PATH} sessions spawn --agent "${agentId}" --mode "${mode}" --runtime "${runtime}" "${task.replace(/"/g, '\\"')}"`;
+        const { stdout } = await execAsync(command);
+        
+        res.json({ 
+            success: true, 
+            message: 'Session spawned successfully',
+            output: stdout
+        });
+    } catch (error) {
+        console.error('Spawn session error:', error.message);
         res.status(500).json({ success: false, error: error.message });
     }
 });
@@ -962,6 +1190,83 @@ app.get('/api/tokens/history', authMiddleware, async (req, res) => {
         );
         
         res.json({ success: true, history });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get daily usage ranking (with daily increment)
+app.get('/api/tokens/daily-ranking', authMiddleware, async (req, res) => {
+    try {
+        const workspaceId = req.query.workspace || DEFAULT_WORKSPACE;
+        const month = req.query.month || new Date().toISOString().slice(0, 7); // YYYY-MM
+        
+        // Get all records for the month
+        const records = await dbQuery(
+            `SELECT date, total_tokens, created_at
+             FROM token_usage
+             WHERE workspace = ? AND DATE_FORMAT(date, '%Y-%m') = ?
+             ORDER BY date ASC`,
+            [workspaceId, month]
+        );
+        
+        // Calculate daily usage in JavaScript
+        let prevTotal = 0;
+        const ranking = records.map((record, index) => {
+            const dailyUsage = index === 0 ? record.total_tokens : record.total_tokens - prevTotal;
+            prevTotal = record.total_tokens;
+            return {
+                ...record,
+                daily_usage: dailyUsage
+            };
+        });
+        
+        // Reverse to show newest first
+        ranking.reverse();
+        
+        res.json({ success: true, ranking });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Get detailed usage for a specific date
+app.get('/api/tokens/date/:date', authMiddleware, async (req, res) => {
+    try {
+        const workspaceId = req.query.workspace || DEFAULT_WORKSPACE;
+        const { date } = req.params;
+        
+        const dayData = await dbQuery(
+            `SELECT date, total_tokens, created_at
+             FROM token_usage
+             WHERE workspace = ? AND date = ?`,
+            [workspaceId, date]
+        );
+        
+        if (dayData.length === 0) {
+            return res.json({ success: false, error: 'No data for this date' });
+        }
+        
+        // Get previous day's data to calculate daily usage
+        const prevDay = await dbQuery(
+            `SELECT total_tokens
+             FROM token_usage
+             WHERE workspace = ? AND date < ?
+             ORDER BY date DESC
+             LIMIT 1`,
+            [workspaceId, date]
+        );
+        
+        const prevTotal = prevDay.length > 0 ? prevDay[0].total_tokens : 0;
+        const dailyUsage = dayData[0].total_tokens - prevTotal;
+        
+        res.json({ 
+            success: true, 
+            data: {
+                ...dayData[0],
+                daily_usage: dailyUsage
+            }
+        });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }

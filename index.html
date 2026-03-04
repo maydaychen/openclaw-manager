@@ -896,6 +896,10 @@
             box-shadow: var(--shadow);
             transition: all 0.2s;
             border: 1px solid transparent;
+            position: relative;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
         }
         
         .skill-card:hover {
@@ -954,15 +958,62 @@
             border-radius: 4px;
         }
         
+        /* Skill Scope Badges */
+        .scope-badge {
+            font-size: 11px;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+        
+        .scope-badge.global {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            color: #667eea;
+            border: 1px solid rgba(102, 126, 234, 0.3);
+        }
+        
+        .scope-badge.workspace {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(52, 211, 153, 0.15));
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+        
+        .skill-author-badge {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--warning);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 500;
+        }
+        
+        /* Skills Section */
+        .skills-section {
+            margin-bottom: 32px;
+        }
+        
+        .skills-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
         .skill-description {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.6;
-            margin-bottom: 12px;
+            margin-bottom: 0;
             display: -webkit-box;
             -webkit-line-clamp: 3;
             -webkit-box-orient: vertical;
             overflow: hidden;
+            flex: 1;
         }
         
         .skill-path {
@@ -984,7 +1035,12 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-top: 12px;
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-subtle);
         }
         
         .skill-footer .skill-path {
@@ -1081,6 +1137,72 @@
         .agent-count {
             font-size: 14px;
             color: var(--text-secondary);
+        }
+        
+        /* Available Agents Section */
+        .available-agents-section {
+            margin-bottom: 30px;
+        }
+        
+        .form-select {
+            padding: 10px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .form-select:hover {
+            border-color: var(--primary);
+        }
+        
+        .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        [data-theme="dark"] .form-select {
+            background: #2d2d30;
+        }
+        
+        .form-textarea {
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: vertical;
+            outline: none;
+            transition: all 0.2s;
+        }
+        
+        .form-textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        [data-theme="dark"] .form-textarea {
+            background: #2d2d30;
+        }
+        
+        .info-panel {
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .glass-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            border: 1px solid var(--border);
         }
         
         .agents-grid {
@@ -1401,6 +1523,81 @@
         }
         
         /* Soul Editor */
+        /* Daily Ranking Table */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        
+        .daily-ranking-table {
+            background: var(--bg-card);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .ranking-header {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr 150px;
+            gap: 16px;
+            padding: 12px 16px;
+            background: var(--bg-elevated);
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .ranking-row {
+            display: grid;
+            grid-template-columns: 120px 1fr 1fr 150px;
+            gap: 16px;
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-subtle);
+            transition: background 0.2s;
+        }
+        
+        .ranking-row:hover {
+            background: var(--bg-elevated);
+        }
+        
+        .ranking-row:last-child {
+            border-bottom: none;
+        }
+        
+        .ranking-date {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .ranking-usage {
+            color: var(--primary);
+            font-weight: 500;
+        }
+        
+        .ranking-total {
+            color: var(--text-secondary);
+        }
+        
+        .ranking-trend {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            position: relative;
+        }
+        
+        .trend-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            border-radius: 2px;
+            transition: width 0.3s;
+        }
+        
         /* Persona Editor Styles */
         .persona-editor {
             display: flex;
@@ -2540,6 +2737,6 @@
         </a>
     </nav>
     
-    <script src="app.js?v=33"></script>
+    <script src="app.js?v=41"></script>
 </body>
 </html>

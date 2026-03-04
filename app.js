@@ -1192,6 +1192,40 @@ async function deleteSkill(skillName) {
 }
 
 // Render skills page
+// Render individual skill card
+function renderSkillCard(skill) {
+    const scopeBadge = skill.scope === 'global' 
+        ? '<span class="scope-badge global">🌍 全局</span>'
+        : `<span class="scope-badge workspace">📂 ${skill.scopeName}</span>`;
+    
+    const authorBadge = skill.author && skill.author !== '-' 
+        ? `<span class="skill-author-badge" title="作者：${skill.author}">✍️ ${skill.author}</span>`
+        : '';
+    
+    return `
+        <div class="skill-card">
+            <div class="skill-header">
+                <div class="skill-icon">🧩</div>
+                <div class="skill-info">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <div class="skill-name">${skill.name}</div>
+                        ${scopeBadge}
+                    </div>
+                    <div class="skill-meta">
+                        ${skill.version !== '-' ? `<span class="skill-version">v${skill.version}</span>` : ''}
+                        ${authorBadge}
+                    </div>
+                </div>
+            </div>
+            <div class="skill-description">${skill.description}</div>
+            <div class="skill-footer">
+                <div class="skill-path" title="${skill.workspace}">📍 ${skill.workspace}</div>
+                <button class="btn-icon danger" onclick="deleteSkill('${skill.name}')" title="删除技能">${icon('delete', 16)}</button>
+            </div>
+        </div>
+    `;
+}
+
 function renderSkillsPage() {
     const container = document.getElementById('skills-content');
     
@@ -1209,32 +1243,33 @@ function renderSkillsPage() {
         return;
     }
     
+    // Group skills by scope
+    const globalSkills = skills.filter(s => s.scope === 'global');
+    const workspaceSkills = skills.filter(s => s.scope === 'workspace');
+    
     container.innerHTML = `
         <div class="toolbar">
             <button class="btn btn-secondary" onclick="fetchSkills()">${icon('refresh', 16)} 刷新</button>
-            <span class="skill-count">共 ${skills.length} 个技能</span>
+            <span class="skill-count">共 ${skills.length} 个技能（全局 ${globalSkills.length} 个，工作空间 ${workspaceSkills.length} 个）</span>
         </div>
-        <div class="skills-grid">
-            ${skills.map(skill => `
-                <div class="skill-card">
-                    <div class="skill-header">
-                        <div class="skill-icon">🧩</div>
-                        <div class="skill-info">
-                            <div class="skill-name">${skill.name}</div>
-                            <div class="skill-meta">
-                                ${skill.version !== '-' ? `<span class="skill-version">v${skill.version}</span>` : ''}
-                                ${skill.author !== '-' ? `<span class="skill-author">${skill.author}</span>` : ''}
-                            </div>
-                        </div>
-                    </div>
-                    <div class="skill-description">${skill.description}</div>
-                    <div class="skill-footer">
-                        <div class="skill-path">路径: ${skill.path}</div>
-                        <button class="btn-icon danger" onclick="deleteSkill('${skill.name}')" title="删除技能">${icon('delete', 16)}</button>
-                    </div>
-                </div>
-            `).join('')}
+        
+        ${globalSkills.length > 0 ? `
+        <div class="skills-section">
+            <h3 class="skills-section-title">🌍 全局技能 <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(${globalSkills.length} 个)</span></h3>
+            <div class="skills-grid">
+                ${globalSkills.map(skill => renderSkillCard(skill)).join('')}
+            </div>
         </div>
+        ` : ''}
+        
+        ${workspaceSkills.length > 0 ? `
+        <div class="skills-section">
+            <h3 class="skills-section-title">📂 工作空间技能 <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">(${workspaceSkills.length} 个)</span></h3>
+            <div class="skills-grid">
+                ${workspaceSkills.map(skill => renderSkillCard(skill)).join('')}
+            </div>
+        </div>
+        ` : ''}
     `;
 }
 
@@ -1376,31 +1411,149 @@ function formatAgentName(agent) {
     return agent.name;
 }
 
+// Available agents list
+let availableAgents = [];
+
+// Fetch available agents from openclaw agents list
+async function fetchAvailableAgents() {
+    try {
+        const response = await apiFetch(`${API_URL}/agents/list`);
+        if (response && response.ok) {
+            const data = await response.json();
+            if (data.success) {
+                availableAgents = data.agents || [];
+                console.log('Loaded available agents:', availableAgents);
+            }
+        }
+    } catch (error) {
+        console.error('Failed to fetch available agents:', error);
+    }
+}
+
+// Spawn new session with selected agent
+async function spawnAgentSession() {
+    const agentId = document.getElementById('agent-select')?.value;
+    const task = document.getElementById('spawn-task')?.value;
+    const mode = document.getElementById('spawn-mode')?.value;
+    const runtime = document.getElementById('spawn-runtime')?.value;
+    
+    if (!agentId) {
+        alert('请选择一个 Agent');
+        return;
+    }
+    
+    if (!task || !task.trim()) {
+        alert('请输入任务描述');
+        return;
+    }
+    
+    try {
+        const response = await apiFetch(`${API_URL}/agents/spawn`, {
+            method: 'POST',
+            body: JSON.stringify({ agentId, task, mode, runtime })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            alert('✅ 会话创建成功！');
+            document.getElementById('spawn-task').value = '';
+            // Refresh agents list
+            fetchAgents();
+        } else {
+            alert('❌ 创建失败：' + data.error);
+        }
+    } catch (error) {
+        alert('❌ 请求失败：' + error.message);
+    }
+}
+
 // Render agents page
 function renderAgentsPage() {
     const container = document.getElementById('agents-content');
     
     console.log('Rendering agents:', agents);
     
-    if (!agents || agents.length === 0) {
-        container.innerHTML = `
-            <div class="toolbar">
-                <button class="btn btn-secondary" onclick="fetchAgents()">${icon('refresh', 16)} 刷新</button>
-            </div>
-            <div class="empty-state large">
-                <div class="empty-icon">🤖</div>
-                <h3>暂无 Agent</h3>
-                <p>当前没有运行中的 Agent</p>
-            </div>
-        `;
-        return;
+    // Fetch available agents if not loaded
+    if (availableAgents.length === 0) {
+        fetchAvailableAgents();
     }
     
     container.innerHTML = `
+        <!-- Available Agents Section -->
+        <div class="available-agents-section" style="margin-bottom: 30px;">
+            <div class="glass-card" style="padding: 20px;">
+                <h3 style="margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+                    🤖 可用 Agent
+                    <span style="font-size: 12px; color: var(--text-secondary); font-weight: normal;">
+                        (选择 Agent 创建新会话)
+                    </span>
+                </h3>
+                
+                <div style="display: grid; gap: 16px;">
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <select id="agent-select" class="form-select" style="flex: 1;">
+                            <option value="">选择一个 Agent...</option>
+                            ${availableAgents.map(agent => `
+                                <option value="${agent.id}" 
+                                    data-workspace="${agent.workspace || ''}" 
+                                    data-model="${agent.model || ''}"
+                                    data-rules="${agent.routingRules || 0}">
+                                    ${agent.name} ${agent.isDefault ? '(默认)' : ''} - ${agent.identity || '无描述'}
+                                </option>
+                            `).join('')}
+                        </select>
+                        <button onclick="showAgentInfo()" class="btn btn-secondary">
+                            ${icon('info', 16)} 查看信息
+                        </button>
+                    </div>
+                    
+                    <div id="agent-info-panel" style="display: none;" class="info-panel">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px;">
+                            <div>
+                                <div class="detail-label">工作空间</div>
+                                <div class="detail-value" id="agent-workspace">-</div>
+                            </div>
+                            <div>
+                                <div class="detail-label">默认模型</div>
+                                <div class="detail-value" id="agent-model">-</div>
+                            </div>
+                            <div>
+                                <div class="detail-label">路由规则</div>
+                                <div class="detail-value" id="agent-rules">-</div>
+                            </div>
+                        </div>
+                        
+                        <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                            <h4 style="margin-bottom: 12px;">🚀 创建新会话</h4>
+                            <textarea id="spawn-task" class="form-textarea" rows="2" 
+                                placeholder="输入任务描述，例如：写一篇关于宝宝辅食的文章..." 
+                                style="width: 100%; margin-bottom: 12px;"></textarea>
+                            <div style="display: flex; gap: 12px; align-items: center;">
+                                <select id="spawn-mode" class="form-select" style="width: 150px;">
+                                    <option value="run">一次性运行</option>
+                                    <option value="session">持久会话</option>
+                                </select>
+                                <select id="spawn-runtime" class="form-select" style="width: 120px;">
+                                    <option value="subagent">Subagent</option>
+                                    <option value="acp">ACP</option>
+                                </select>
+                                <button onclick="spawnAgentSession()" class="btn btn-success">
+                                    ${icon('plus', 16)} 创建会话
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Active Agents Section -->
         <div class="toolbar">
             <button class="btn btn-secondary" onclick="fetchAgents()">${icon('refresh', 16)} 刷新</button>
-            <span class="agent-count">共 ${agents.length} 个 Agent</span>
+            <span class="agent-count">共 ${agents.length} 个活跃 Agent</span>
         </div>
+        ${agents && agents.length > 0 ? `
         <div class="agents-grid">
             ${agents.map(agent => `
                 <div class="agent-card ${agent.status}">
@@ -1440,7 +1593,33 @@ function renderAgentsPage() {
                 </div>
             `).join('')}
         </div>
+        ` : `
+        <div class="empty-state large">
+            <div class="empty-icon">🤖</div>
+            <h3>暂无活跃 Agent</h3>
+            <p>可以使用上方的 Agent 选择器创建新会话</p>
+        </div>
+        `}
     `;
+}
+
+// Show agent info panel
+function showAgentInfo() {
+    const select = document.getElementById('agent-select');
+    const selectedOption = select.options[select.selectedIndex];
+    const panel = document.getElementById('agent-info-panel');
+    
+    if (!selectedOption.value) {
+        alert('请先选择一个 Agent');
+        return;
+    }
+    
+    // Update info panel
+    document.getElementById('agent-workspace').textContent = selectedOption.dataset.workspace || '-';
+    document.getElementById('agent-model').textContent = selectedOption.dataset.model || '-';
+    document.getElementById('agent-rules').textContent = (selectedOption.dataset.rules || '0') + ' 条';
+    
+    panel.style.display = 'block';
 }
 
 // Update active nav
@@ -1679,6 +1858,7 @@ function renderAnalyticsPage(periodStats) {
     
     // Default values if no stats
     const stats = periodStats || { today: 0, week: 0, month: 0, total: 0 };
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM
     
     container.innerHTML = `
         <div class="toolbar">
@@ -1718,6 +1898,23 @@ function renderAnalyticsPage(periodStats) {
                 <div class="stat-subtitle">所有 Agent 累计</div>
             </div>
         </div>
+        
+        <!-- Daily Usage Ranking -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h3>📅 每日 Token 使用排行</h3>
+                <select id="month-selector" onchange="loadDailyRanking(this.value)" style="padding:8px 12px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text-primary);font-size:14px;cursor:pointer;">
+                    ${generateMonthOptions(currentMonth)}
+                </select>
+            </div>
+            <div id="daily-ranking-content">
+                <div class="loading-container">
+                    <div class="loading-spinner"></div>
+                    <p>加载中...</p>
+                </div>
+            </div>
+        </div>
+        
         <div class="analytics-section">
             <h3>Agent Token 使用排行</h3>
             <div class="token-ranking">
@@ -1734,6 +1931,136 @@ function renderAnalyticsPage(periodStats) {
             </div>
         </div>
     `;
+    
+    // Load daily ranking
+    loadDailyRanking(currentMonth);
+}
+
+// Generate month options for select dropdown
+function generateMonthOptions(currentMonth) {
+    const months = [];
+    const now = new Date();
+    
+    // Generate last 12 months
+    for (let i = 0; i < 12; i++) {
+        const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const value = `${year}-${month}`;
+        const label = `${year}年${month}月`;
+        const selected = value === currentMonth ? 'selected' : '';
+        months.push(`<option value="${value}" ${selected}>${label}</option>`);
+    }
+    
+    return months.join('');
+}
+
+// Load daily usage ranking
+async function loadDailyRanking(month) {
+    const container = document.getElementById('daily-ranking-content');
+    if (!container) return;
+    
+    showLoading('daily-ranking-content');
+    
+    try {
+        const response = await apiFetch(`${API_URL}/tokens/daily-ranking?workspace=${currentWorkspace}&month=${month}`);
+        if (!response) return;
+        
+        const data = await response.json();
+        if (!data.success || !data.ranking) {
+            container.innerHTML = '<div class="empty-state"><p>暂无数据</p></div>';
+            return;
+        }
+        
+        const ranking = data.ranking;
+        
+        if (ranking.length === 0) {
+            container.innerHTML = '<div class="empty-state"><p>该月份暂无数据</p></div>';
+            return;
+        }
+        
+        const maxUsage = Math.max(...ranking.map(r => r.daily_usage || 0));
+        
+        container.innerHTML = `
+            <div class="daily-ranking-table">
+                <div class="ranking-header">
+                    <span>日期</span>
+                    <span>当日使用量</span>
+                    <span>累计总量</span>
+                    <span>趋势</span>
+                </div>
+                ${ranking.map((day, index) => {
+                    // Fix date format (remove time part)
+                    const dateStr = day.date.split('T')[0];
+                    const usage = day.daily_usage || 0;
+                    const percentage = maxUsage > 0 ? (usage / maxUsage * 100) : 0;
+                    const trend = usage > 0 ? '📈' : (usage < 0 ? '📉' : '➖');
+                    
+                    return `
+                        <div class="ranking-row" onclick="showDayDetail('${dateStr}')" style="cursor:pointer;">
+                            <span class="ranking-date">${dateStr}</span>
+                            <span class="ranking-usage">${usage.toLocaleString()}</span>
+                            <span class="ranking-total">${day.total_tokens.toLocaleString()}</span>
+                            <span class="ranking-trend">
+                                <div class="trend-bar" style="width:${percentage}%"></div>
+                                ${trend}
+                            </span>
+                        </div>
+                    `;
+                }).join('')}
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = '<div class="empty-state"><p>加载失败</p></div>';
+    }
+}
+
+// Show detail for a specific day
+async function showDayDetail(date) {
+    try {
+        const response = await apiFetch(`${API_URL}/tokens/date/${date}?workspace=${currentWorkspace}`);
+        if (!response) return;
+        
+        const data = await response.json();
+        if (!data.success) {
+            showNotification('该日期无数据', 'info');
+            return;
+        }
+        
+        const day = data.data;
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal">
+                <div class="modal-header">
+                    <h3>📊 ${date} 使用详情</h3>
+                    <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+                </div>
+                <div class="modal-body" style="padding:24px;">
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;">
+                        <div style="background:var(--bg-elevated);padding:16px;border-radius:8px;">
+                            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">当日使用量</div>
+                            <div style="font-size:24px;font-weight:600;color:var(--primary);">${(day.daily_usage || 0).toLocaleString()}</div>
+                        </div>
+                        <div style="background:var(--bg-elevated);padding:16px;border-radius:8px;">
+                            <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">累计总量</div>
+                            <div style="font-size:24px;font-weight:600;color:var(--success);">${day.total_tokens.toLocaleString()}</div>
+                        </div>
+                    </div>
+                    <div style="background:var(--bg-elevated);padding:16px;border-radius:8px;">
+                        <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px;">更新时间</div>
+                        <div style="font-size:14px;">${new Date(day.created_at).toLocaleString('zh-CN')}</div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="this.closest('.modal-overlay').remove()">关闭</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+    } catch (e) {
+        showNotification('加载失败', 'error');
+    }
 }
 
 // ==================== 新功能: 人格与配置编辑器 ====================
