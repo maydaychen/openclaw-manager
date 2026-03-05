@@ -306,32 +306,12 @@ MIT License - 详见 [LICENSE](./LICENSE) 文件
 
 ---
 
-## 👨‍💻 作者
-
-**maydaychen** (Chin Yaku)
-
-- GitHub: [@maydaychen](https://github.com/maydaychen)
-- Location: Wuxi, China
-- Email: chin.yaku@example.com
-
----
-
 ## 🙏 致谢
 
 - [OpenClaw](https://github.com/openclaw/openclaw) - 强大的 AI 助手框架
 - [Vue.js](https://vuejs.org/) - 渐进式 JavaScript 框架
 - [Tailwind CSS](https://tailwindcss.com/) - 实用优先的 CSS 框架
 - [Express](https://expressjs.com/) - Node.js Web 框架
-
----
-
-## 📞 联系方式
-
-如有问题或建议，请通过以下方式联系：
-
-- 提交 [GitHub Issue](https://github.com/maydaychen/openclaw-manager/issues)
-- 发送邮件至 chin.yaku@example.com
-- 在 OpenClaw 社区提问
 
 ---
 
