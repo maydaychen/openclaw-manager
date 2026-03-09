@@ -488,6 +488,59 @@ async function createBackup(uploadToDrive = false) {
     }
 }
 
+// Delete backup
+async function deleteBackup(backupName) {
+    showConfirm(
+        '删除备份',
+        `确定要删除备份 "${backupName}" 吗？此操作不可恢复。`,
+        async () => {
+            const response = await apiFetch(
+                `${API_URL}/backups/${encodeURIComponent(backupName)}?workspace=${currentWorkspace}`,
+                { method: 'DELETE' }
+            );
+            
+            if (response) {
+                const data = await response.json();
+                if (data.success) {
+                    showToast('备份已删除', 'success');
+                    fetchBackups();
+                } else {
+                    showToast('删除失败: ' + (data.error || '未知错误'), 'error');
+                }
+            }
+        },
+        '删除',
+        '取消',
+        'danger'
+    );
+}
+
+// Export backup to NAS
+async function exportBackupToNas(backupName) {
+    showConfirm(
+        '导出到 NAS',
+        `确定要将 "${backupName}" 导出到 NAS 吗？`,
+        async () => {
+            const response = await apiFetch(
+                `${API_URL}/backups/${encodeURIComponent(backupName)}/export-nas?workspace=${currentWorkspace}`,
+                { method: 'POST' }
+            );
+            
+            if (response) {
+                const data = await response.json();
+                if (data.success) {
+                    showToast('已导出到 NAS: ' + data.nasPath, 'success');
+                } else {
+                    showToast('导出失败: ' + (data.error || '未知错误'), 'error');
+                }
+            }
+        },
+        '导出',
+        '取消',
+        'primary'
+    );
+}
+
 // ==================== Unified Dialog System ====================
 
 // Show custom confirm dialog
@@ -1577,23 +1630,33 @@ function renderBackupsPage() {
     const backupListHtml = backups && backups.length > 0 ? `
         <div class="backups-list">
             ${backups.map(backup => `
-                <div class="backup-card">
-                    <div class="backup-icon">
-                        ${backup.driveUrl ? icon('cloud', 20) : '📦'}
-                    </div>
-                    <div class="backup-info">
-                        <div class="backup-name">${backup.name}</div>
-                        <div class="backup-meta">
-                            <span>创建于 ${formatDate(backup.created)}</span>
-                            ${backup.driveUrl ? `<a href="${backup.driveUrl}" target="_blank" class="drive-link">查看云端备份</a>` : ''}
+                <div class="backup-card" style="display: flex; align-items: center; justify-content: space-between; padding: 16px;">
+                    <div style="display: flex; align-items: center; flex: 1;">
+                        <div class="backup-icon" style="margin-right: 12px;">
+                            ${backup.driveUrl ? icon('cloud', 20) : icon('backup', 20)}
                         </div>
+                        <div class="backup-info">
+                            <div class="backup-name">${escapeHtml(backup.name)}</div>
+                            <div class="backup-meta" style="font-size: 12px; color: var(--text-secondary); margin-top: 4px;">
+                                <span>${formatDate(backup.created)} · ${formatFileSize(backup.size)}</span>
+                                ${backup.driveUrl ? `<a href="${backup.driveUrl}" target="_blank" style="margin-left: 8px; color: var(--theme-primary);">查看云端备份</a>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <button class="btn btn-secondary btn-sm" onclick="exportBackupToNas('${escapeHtml(backup.name)}')" title="导出到 NAS">
+                            ${icon('upload', 16)} NAS
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="deleteBackup('${escapeHtml(backup.name)}')" title="删除备份">
+                            ${icon('trash', 16)}
+                        </button>
                     </div>
                 </div>
             `).join('')}
         </div>
     ` : `
         <div class="empty-state large">
-            <div class="empty-icon">💾</div>
+            <div class="empty-icon">${icon('backup', 48)}</div>
             <h3>暂无备份</h3>
             <p>点击下方按钮创建第一个备份</p>
         </div>
@@ -1914,6 +1977,15 @@ function formatDate(dateStr) {
     if (!dateStr) return '--';
     const date = new Date(dateStr);
     return date.toLocaleString('zh-CN', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+// Format file size
+function formatFileSize(bytes) {
+    if (bytes === 0 || bytes === undefined || bytes === null) return '--';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
 // ==================== 新功能: 会话监控 ====================

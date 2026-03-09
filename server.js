@@ -882,6 +882,91 @@ app.post('/api/backups/create', authMiddleware, async (req, res) => {
     }
 });
 
+// Delete a backup
+app.delete('/api/backups/:name', authMiddleware, async (req, res) => {
+    try {
+        const workspaceId = req.query.workspace || DEFAULT_WORKSPACE;
+        const workspacePath = getWorkspacePath(workspaceId);
+        const backupDir = path.join(workspacePath, 'backups');
+        const { name } = req.params;
+        
+        // Security: prevent path traversal
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(400).json({ success: false, error: 'Invalid backup name' });
+        }
+        
+        const backupPath = path.join(backupDir, name);
+        
+        // Check if file exists
+        try {
+            await fs.access(backupPath);
+        } catch {
+            return res.status(404).json({ success: false, error: 'Backup not found' });
+        }
+        
+        // Delete the file
+        await fs.unlink(backupPath);
+        
+        res.json({ success: true, message: 'Backup deleted' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Export backup to NAS
+app.post('/api/backups/:name/export-nas', authMiddleware, async (req, res) => {
+    try {
+        const workspaceId = req.query.workspace || DEFAULT_WORKSPACE;
+        const workspacePath = getWorkspacePath(workspaceId);
+        const backupDir = path.join(workspacePath, 'backups');
+        const { name } = req.params;
+        
+        // Security: prevent path traversal
+        if (name.includes('..') || name.includes('/') || name.includes('\\')) {
+            return res.status(400).json({ success: false, error: 'Invalid backup name' });
+        }
+        
+        const backupPath = path.join(backupDir, name);
+        
+        // Check if file exists
+        try {
+            await fs.access(backupPath);
+        } catch {
+            return res.status(404).json({ success: false, error: 'Backup not found' });
+        }
+        
+        // Read NAS config
+        const configPath = path.join(__dirname, 'config.json');
+        let config = {};
+        try {
+            const configData = await fs.readFile(configPath, 'utf8');
+            config = JSON.parse(configData);
+        } catch (e) {
+            return res.status(500).json({ success: false, error: 'Config file not found' });
+        }
+        
+        const nasConfig = config.backup?.nas;
+        if (!nasConfig?.enabled || !nasConfig?.path) {
+            return res.status(400).json({ success: false, error: 'NAS backup not configured' });
+        }
+        
+        // Ensure NAS directory exists
+        await fs.mkdir(nasConfig.path, { recursive: true });
+        
+        // Copy file to NAS
+        const nasBackupPath = path.join(nasConfig.path, name);
+        await fs.copyFile(backupPath, nasBackupPath);
+        
+        res.json({ 
+            success: true, 
+            message: 'Backup exported to NAS',
+            nasPath: nasBackupPath
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Get backup configuration
 app.get('/api/backups/config', authMiddleware, async (req, res) => {
     try {
