@@ -534,6 +534,49 @@ app.post('/api/crons/:id/toggle', authMiddleware, async (req, res) => {
     }
 });
 
+// Update cron job
+app.put('/api/crons/:id', authMiddleware, async (req, res) => {
+    try {
+        const { name, schedule, sessionTarget, wakeMode, payload } = req.body;
+        
+        // Build update command
+        const updates = [];
+        if (name) updates.push(`--name "${name}"`);
+        if (sessionTarget) updates.push(`--session-target ${sessionTarget}`);
+        if (wakeMode) updates.push(`--wake-mode ${wakeMode}`);
+        
+        // Build schedule argument
+        if (schedule) {
+            switch (schedule.kind) {
+                case 'every':
+                    updates.push(`--schedule "every ${schedule.everyMs}ms"`);
+                    break;
+                case 'cron':
+                    updates.push(`--schedule "cron ${schedule.expr}"`);
+                    break;
+                case 'at':
+                    updates.push(`--schedule "at ${schedule.at}"`);
+                    break;
+            }
+        }
+        
+        // Build payload argument
+        if (payload) {
+            const payloadJson = JSON.stringify(payload).replace(/"/g, '\\"');
+            updates.push(`--payload "${payloadJson}"`);
+        }
+        
+        if (updates.length > 0) {
+            const command = `${OPENCLAW_PATH} cron update ${req.params.id} ${updates.join(' ')}`;
+            await execAsync(command);
+        }
+        
+        res.json({ success: true, message: 'Cron job updated' });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 // Skills management API
 app.get('/api/skills', authMiddleware, async (req, res) => {
     try {

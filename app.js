@@ -925,6 +925,40 @@ function toggleDir(path) {
     renderFilesPage();
 }
 
+// Format schedule for display
+function formatSchedule(schedule) {
+    if (!schedule) return '未知';
+    if (typeof schedule === 'string') return schedule;
+    
+    switch (schedule.kind) {
+        case 'every':
+            const minutes = Math.floor(schedule.everyMs / 60000);
+            const hours = Math.floor(minutes / 60);
+            if (hours > 0) {
+                return `每 ${hours} 小时`;
+            }
+            return `每 ${minutes} 分钟`;
+        case 'cron':
+            return `Cron: ${schedule.expr}`;
+        case 'at':
+            return `一次性: ${new Date(schedule.at).toLocaleString('zh-CN')}`;
+        default:
+            return JSON.stringify(schedule);
+    }
+}
+
+// Format payload for display
+function formatPayload(payload) {
+    if (!payload) return '无';
+    if (payload.kind === 'systemEvent') {
+        return `系统事件: ${payload.text?.substring(0, 50)}...`;
+    }
+    if (payload.kind === 'agentTurn') {
+        return `Agent 执行: ${payload.message?.substring(0, 50)}...`;
+    }
+    return JSON.stringify(payload, null, 2);
+}
+
 // Render cron page
 function renderCronPage() {
     const container = document.getElementById('cron-content');
@@ -949,16 +983,17 @@ function renderCronPage() {
         </div>
         <div class="cron-list">
             ${crons.map(cron => `
-                <div class="cron-card">
+                <div class="cron-card" data-cron-id="${cron.id}">
                     <div class="cron-info">
                         <div class="cron-name">${cron.name || cron.id}</div>
                         <div class="cron-meta">
-                            <span class="cron-schedule">${cron.schedule}</span>
+                            <span class="cron-schedule">${formatSchedule(cron.schedule)}</span>
                             <span class="cron-id">ID: ${cron.id}</span>
                         </div>
                     </div>
                     <div class="cron-status-badge ${cron.enabled ? 'enabled' : 'disabled'}">${cron.enabled ? '● 已启用' : '○ 已禁用'}</div>
                     <div class="cron-actions">
+                        <button class="btn btn-sm btn-secondary" onclick="showCronDetail('${cron.id}')">详情</button>
                         <button class="btn btn-sm ${cron.enabled ? 'btn-secondary' : 'btn-primary'}" onclick="toggleCron('${cron.id}', ${!cron.enabled})">${cron.enabled ? '禁用' : '启用'}</button>
                         <button class="btn btn-sm btn-danger" onclick="deleteCron('${cron.id}')">删除</button>
                     </div>
@@ -966,6 +1001,168 @@ function renderCronPage() {
             `).join('')}
         </div>
     `;
+}
+
+// Show cron detail modal
+function showCronDetail(cronId) {
+    const cron = crons.find(c => c.id === cronId);
+    if (!cron) return;
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+            <div class="modal-header">
+                <h3>定时任务详情</h3>
+                <button class="modal-close" onclick="closeModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>任务名称</label>
+                    <input type="text" class="form-input" id="edit-cron-name" value="${escapeHtml(cron.name || '')}">
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>调度类型</label>
+                        <select class="form-select" id="edit-cron-schedule-kind" onchange="onScheduleKindChange()">
+                            <option value="every" ${cron.schedule?.kind === 'every' ? 'selected' : ''}>周期性 (every)</option>
+                            <option value="cron" ${cron.schedule?.kind === 'cron' ? 'selected' : ''}>Cron 表达式</option>
+                            <option value="at" ${cron.schedule?.kind === 'at' ? 'selected' : ''}>一次性 (at)</option>
+                        </select>
+                    </div>
+                    <div class="form-group" id="schedule-value-container">
+                        ${renderScheduleValueInput(cron.schedule)}
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>执行目标</label>
+                    <select class="form-select" id="edit-cron-target">
+                        <option value="main" ${cron.sessionTarget === 'main' ? 'selected' : ''}>主会话 (main)</option>
+                        <option value="isolated" ${cron.sessionTarget === 'isolated' ? 'selected' : ''}>独立会话 (isolated)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>唤醒模式</label>
+                    <select class="form-select" id="edit-cron-wake">
+                        <option value="now" ${cron.wakeMode === 'now' ? 'selected' : ''}>立即 (now)</option>
+                        <option value="next-heartbeat" ${cron.wakeMode === 'next-heartbeat' ? 'selected' : ''}>下次心跳 (next-heartbeat)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Payload 类型</label>
+                    <select class="form-select" id="edit-cron-payload-kind" onchange="onPayloadKindChange()">
+                        <option value="systemEvent" ${cron.payload?.kind === 'systemEvent' ? 'selected' : ''}>系统事件</option>
+                        <option value="agentTurn" ${cron.payload?.kind === 'agentTurn' ? 'selected' : ''}>Agent 执行</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>内容/消息</label>
+                    <textarea class="form-textarea" id="edit-cron-payload-text" rows="4">${escapeHtml(cron.payload?.text || cron.payload?.message || '')}</textarea>
+                </div>
+                <div class="form-group">
+                    <label>状态信息</label>
+                    <div class="info-box">
+                        <p><strong>下次运行:</strong> ${cron.state?.nextRunAtMs ? new Date(cron.state.nextRunAtMs).toLocaleString('zh-CN') : '未知'}</p>
+                        <p><strong>上次运行:</strong> ${cron.state?.lastRunAtMs ? new Date(cron.state.lastRunAtMs).toLocaleString('zh-CN') : '从未'}</p>
+                        <p><strong>上次状态:</strong> ${cron.state?.lastStatus || '未知'}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-glass" onclick="closeModal()">取消</button>
+                <button class="btn btn-primary" onclick="saveCronEdit('${cron.id}')">保存修改</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+// Render schedule value input based on kind
+function renderScheduleValueInput(schedule) {
+    if (!schedule) return '<input type="text" class="form-input" id="edit-cron-schedule-value" placeholder="请输入值">';
+    
+    switch (schedule.kind) {
+        case 'every':
+            const minutes = Math.floor((schedule.everyMs || 0) / 60000);
+            return `
+                <label>间隔 (分钟)</label>
+                <input type="number" class="form-input" id="edit-cron-schedule-value" value="${minutes}" min="1">
+            `;
+        case 'cron':
+            return `
+                <label>Cron 表达式</label>
+                <input type="text" class="form-input" id="edit-cron-schedule-value" value="${escapeHtml(schedule.expr || '')}" placeholder="0 9 * * *">
+            `;
+        case 'at':
+            return `
+                <label>执行时间</label>
+                <input type="datetime-local" class="form-input" id="edit-cron-schedule-value" value="${schedule.at ? new Date(schedule.at).toISOString().slice(0, 16) : ''}">
+            `;
+        default:
+            return '<input type="text" class="form-input" id="edit-cron-schedule-value">';
+    }
+}
+
+// Handle schedule kind change
+function onScheduleKindChange() {
+    const kind = document.getElementById('edit-cron-schedule-kind').value;
+    const container = document.getElementById('schedule-value-container');
+    container.innerHTML = renderScheduleValueInput({ kind });
+}
+
+// Handle payload kind change
+function onPayloadKindChange() {
+    // Could update placeholder or help text based on selection
+}
+
+// Save cron edit
+async function saveCronEdit(cronId) {
+    try {
+        const name = document.getElementById('edit-cron-name').value;
+        const scheduleKind = document.getElementById('edit-cron-schedule-kind').value;
+        const scheduleValue = document.getElementById('edit-cron-schedule-value').value;
+        const sessionTarget = document.getElementById('edit-cron-target').value;
+        const wakeMode = document.getElementById('edit-cron-wake').value;
+        const payloadKind = document.getElementById('edit-cron-payload-kind').value;
+        const payloadText = document.getElementById('edit-cron-payload-text').value;
+        
+        // Build schedule object
+        let schedule;
+        switch (scheduleKind) {
+            case 'every':
+                schedule = { kind: 'every', everyMs: parseInt(scheduleValue) * 60000 };
+                break;
+            case 'cron':
+                schedule = { kind: 'cron', expr: scheduleValue, tz: 'Asia/Shanghai' };
+                break;
+            case 'at':
+                schedule = { kind: 'at', at: new Date(scheduleValue).toISOString() };
+                break;
+        }
+        
+        // Build payload
+        const payload = {
+            kind: payloadKind,
+            [payloadKind === 'systemEvent' ? 'text' : 'message']: payloadText
+        };
+        
+        const response = await apiFetch(`${API_URL}/crons/${cronId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, schedule, sessionTarget, wakeMode, payload })
+        });
+        
+        if (response.success) {
+            showToast('定时任务更新成功', 'success');
+            closeModal();
+            fetchCrons();
+        } else {
+            showToast('更新失败: ' + response.error, 'error');
+        }
+    } catch (error) {
+        console.error('保存定时任务失败:', error);
+        showToast('保存失败: ' + error.message, 'error');
+    }
 }
 
 // Render users page
@@ -1373,6 +1570,31 @@ function renderBackupsPage() {
         </div>
         ${backupListHtml}
     `;
+}
+
+// Show toast notification
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 12px 24px;
+        background: ${type === 'success' ? '#38ef7d' : type === 'error' ? '#f45c43' : '#4facfe'};
+        color: white;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
 
 // Escape HTML
