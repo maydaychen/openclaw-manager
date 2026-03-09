@@ -1349,7 +1349,7 @@ app.get('/api/tokens/daily-ranking', authMiddleware, async (req, res) => {
         // Calculate daily usage in JavaScript
         let prevTotal = 0;
         const ranking = records.map((record, index) => {
-            const dailyUsage = index === 0 ? record.total_tokens : record.total_tokens - prevTotal;
+            const dailyUsage = index === 0 ? record.total_tokens : Math.max(0, record.total_tokens - prevTotal);
             prevTotal = record.total_tokens;
             return {
                 ...record,
