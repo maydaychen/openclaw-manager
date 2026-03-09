@@ -1019,12 +1019,12 @@ function showCronDetail(cronId) {
             <div class="modal-body">
                 <div class="form-group">
                     <label>任务名称</label>
-                    <input type="text" class="form-input" id="edit-cron-name" value="${escapeHtml(cron.name || '')}">
+                    <input type="text" id="edit-cron-name" value="${escapeHtml(cron.name || '')}">
                 </div>
                 <div class="form-row">
                     <div class="form-group">
                         <label>调度类型</label>
-                        <select class="form-select" id="edit-cron-schedule-kind" onchange="onScheduleKindChange()">
+                        <select  id="edit-cron-schedule-kind" onchange="onScheduleKindChange()">
                             <option value="every" ${cron.schedule?.kind === 'every' ? 'selected' : ''}>周期性 (every)</option>
                             <option value="cron" ${cron.schedule?.kind === 'cron' ? 'selected' : ''}>Cron 表达式</option>
                             <option value="at" ${cron.schedule?.kind === 'at' ? 'selected' : ''}>一次性 (at)</option>
@@ -1036,28 +1036,28 @@ function showCronDetail(cronId) {
                 </div>
                 <div class="form-group">
                     <label>执行目标</label>
-                    <select class="form-select" id="edit-cron-target">
+                    <select  id="edit-cron-target">
                         <option value="main" ${cron.sessionTarget === 'main' ? 'selected' : ''}>主会话 (main)</option>
                         <option value="isolated" ${cron.sessionTarget === 'isolated' ? 'selected' : ''}>独立会话 (isolated)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>唤醒模式</label>
-                    <select class="form-select" id="edit-cron-wake">
+                    <select  id="edit-cron-wake">
                         <option value="now" ${cron.wakeMode === 'now' ? 'selected' : ''}>立即 (now)</option>
                         <option value="next-heartbeat" ${cron.wakeMode === 'next-heartbeat' ? 'selected' : ''}>下次心跳 (next-heartbeat)</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>Payload 类型</label>
-                    <select class="form-select" id="edit-cron-payload-kind" onchange="onPayloadKindChange()">
+                    <select  id="edit-cron-payload-kind" onchange="onPayloadKindChange()">
                         <option value="systemEvent" ${cron.payload?.kind === 'systemEvent' ? 'selected' : ''}>系统事件</option>
                         <option value="agentTurn" ${cron.payload?.kind === 'agentTurn' ? 'selected' : ''}>Agent 执行</option>
                     </select>
                 </div>
                 <div class="form-group">
                     <label>内容/消息</label>
-                    <textarea class="form-textarea" id="edit-cron-payload-text" rows="4">${escapeHtml(cron.payload?.text || cron.payload?.message || '')}</textarea>
+                    <textarea  id="edit-cron-payload-text" rows="4">${escapeHtml(cron.payload?.text || cron.payload?.message || '')}</textarea>
                 </div>
                 <div class="form-group">
                     <label>状态信息</label>
@@ -1079,27 +1079,27 @@ function showCronDetail(cronId) {
 
 // Render schedule value input based on kind
 function renderScheduleValueInput(schedule) {
-    if (!schedule) return '<input type="text" class="form-input" id="edit-cron-schedule-value" placeholder="请输入值">';
+    if (!schedule) return '<input type="text"  id="edit-cron-schedule-value" placeholder="请输入值">';
     
     switch (schedule.kind) {
         case 'every':
             const minutes = Math.floor((schedule.everyMs || 0) / 60000);
             return `
                 <label>间隔 (分钟)</label>
-                <input type="number" class="form-input" id="edit-cron-schedule-value" value="${minutes}" min="1">
+                <input type="number"  id="edit-cron-schedule-value" value="${minutes}" min="1">
             `;
         case 'cron':
             return `
                 <label>Cron 表达式</label>
-                <input type="text" class="form-input" id="edit-cron-schedule-value" value="${escapeHtml(schedule.expr || '')}" placeholder="0 9 * * *">
+                <input type="text"  id="edit-cron-schedule-value" value="${escapeHtml(schedule.expr || '')}" placeholder="0 9 * * *">
             `;
         case 'at':
             return `
                 <label>执行时间</label>
-                <input type="datetime-local" class="form-input" id="edit-cron-schedule-value" value="${schedule.at ? new Date(schedule.at).toISOString().slice(0, 16) : ''}">
+                <input type="datetime-local"  id="edit-cron-schedule-value" value="${schedule.at ? new Date(schedule.at).toISOString().slice(0, 16) : ''}">
             `;
         default:
-            return '<input type="text" class="form-input" id="edit-cron-schedule-value">';
+            return '<input type="text"  id="edit-cron-schedule-value">';
     }
 }
 
@@ -1714,7 +1714,7 @@ function renderAgentsPage() {
                 
                 <div style="display: grid; gap: 16px;">
                     <div style="display: flex; gap: 12px; align-items: center;">
-                        <select id="agent-select" class="form-select" style="flex: 1;">
+                        <select id="agent-select"  style="flex: 1;">
                             <option value="">选择一个 Agent...</option>
                             ${availableAgents.map(agent => `
                                 <option value="${agent.id}" 
@@ -1748,15 +1748,15 @@ function renderAgentsPage() {
                         
                         <div style="border-top: 1px solid var(--border); padding-top: 20px;">
                             <h4 style="margin-bottom: 12px;">🚀 创建新会话</h4>
-                            <textarea id="spawn-task" class="form-textarea" rows="2" 
+                            <textarea id="spawn-task"  rows="2" 
                                 placeholder="输入任务描述，例如：写一篇关于宝宝辅食的文章..." 
                                 style="width: 100%; margin-bottom: 12px;"></textarea>
                             <div style="display: flex; gap: 12px; align-items: center;">
-                                <select id="spawn-mode" class="form-select" style="width: 150px;">
+                                <select id="spawn-mode"  style="width: 150px;">
                                     <option value="run">一次性运行</option>
                                     <option value="session">持久会话</option>
                                 </select>
-                                <select id="spawn-runtime" class="form-select" style="width: 120px;">
+                                <select id="spawn-runtime"  style="width: 120px;">
                                     <option value="subagent">Subagent</option>
                                     <option value="acp">ACP</option>
                                 </select>
