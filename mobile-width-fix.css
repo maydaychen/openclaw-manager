@@ -1,0 +1,97 @@
+/* Mobile Width Fix - Ensure all content stays within screen width */
+@media (max-width: 768px) {
+    /* Ensure body and main containers don't exceed screen width */
+    html, body {
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100vw;
+    }
+    
+    .main-content {
+        width: 100%;
+        max-width: 100vw;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure all cards and containers respect screen width */
+    .stat-card,
+    .file-browser,
+    .cron-card,
+    .skill-card,
+    .user-card,
+    .agent-card,
+    .backup-card,
+    .config-editor,
+    .analytics-section,
+    .persona-editor,
+    .gateway-config,
+    .quick-actions {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure grids don't exceed screen width */
+    .dashboard-grid,
+    .skills-grid,
+    .agents-grid,
+    .gateway-grid,
+    .action-buttons {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure tables and lists don't overflow */
+    .file-list-header,
+    .file-row,
+    .daily-ranking-table,
+    .data-table {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden;
+    }
+    
+    /* Prevent text overflow */
+    .file-name-text,
+    .skill-name,
+    .agent-name,
+    .backup-name,
+    .user-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        max-width: 100%;
+        display: inline-block;
+    }
+    
+    /* Ensure buttons and form elements respect width */
+    .btn,
+    .form-group input,
+    .form-group select,
+    .form-group textarea,
+    .workspace-selector {
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+    }
+    
+    /* Prevent horizontal scrolling on mobile */
+    * {
+        max-width: 100vw;
+        overflow-x: hidden;
+    }
+    
+    /* Ensure modals and dialogs stay within screen */
+    .modal,
+    .dialog,
+    .confirm-dialog {
+        max-width: 95vw !important;
+        width: 95vw !important;
+        box-sizing: border-box;
+    }
+}
