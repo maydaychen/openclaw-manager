@@ -1286,8 +1286,43 @@ app.put('/api/files/:filepath(*)/content', authMiddleware, async (req, res) => {
 // Gateway info API
 app.get('/api/gateway/info', authMiddleware, async (req, res) => {
     try {
-        const { stdout } = await execAsync(`${OPENCLAW_PATH} gateway status --json 2>/dev/null || echo "{}"`);
-        const data = JSON.parse(stdout);
+        // Try to get status from openclaw command
+        let data = {};
+        try {
+            const { stdout } = await execAsync(`${OPENCLAW_PATH} gateway status --json 2>/dev/null || echo "{}"`);
+            data = JSON.parse(stdout);
+        } catch (e) {
+            data = {};
+        }
+        
+        // Fallback: check if port is listening
+        const port = data.gateway?.port || 18789;
+        let isRunning = false;
+        let pid = null;
+        
+        try {
+            const { stdout: netstatOutput } = await execAsync(`netstat -tlnp 2>/dev/null | grep ":${port} " || ss -tlnp 2>/dev/null | grep ":${port} " || echo ""`);
+            if (netstatOutput.includes(`:${port}`)) {
+                isRunning = true;
+                // Try to extract PID
+                const pidMatch = netstatOutput.match(/pid=(\d+)/) || netstatOutput.match(/,(\d+)\//);
+                if (pidMatch) {
+                    pid = parseInt(pidMatch[1]);
+                }
+            }
+        } catch (e) {
+            // Ignore error
+        }
+        
+        // If we detected running but openclaw says unknown, fix the status
+        if (isRunning && data.service?.runtime?.status === 'unknown') {
+            data.service = data.service || {};
+            data.service.runtime = data.service.runtime || {};
+            data.service.runtime.status = 'running';
+            data.service.runtime.state = 'active';
+            data.service.runtime.pid = pid || data.service.runtime.pid;
+        }
+        
         res.json({ success: true, gateway: data });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
