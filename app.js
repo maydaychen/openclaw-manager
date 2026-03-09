@@ -2516,10 +2516,16 @@ async function fetchGatewayInfo() {
 function renderGatewayPage() {
     const container = document.getElementById('gateway-content');
     
+    // Debug: log actual data
+    console.log('Gateway Info:', gatewayInfo);
+    
     // Extract status from nested structure
-    const runtime = gatewayInfo.service?.runtime || gatewayInfo.runtime || {};
-    const status = runtime.status || runtime.state || gatewayInfo.status || 'unknown';
+    const service = gatewayInfo?.service || {};
+    const runtime = service?.runtime || gatewayInfo?.runtime || {};
+    const status = runtime?.status || runtime?.state || gatewayInfo?.status || 'unknown';
     const isRunning = status === 'running' || status === 'active';
+    
+    console.log('Extracted status:', status, 'isRunning:', isRunning);
     
     // Extract other info
     const gateway = gatewayInfo.gateway || {};
