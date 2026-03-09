@@ -1187,8 +1187,15 @@ app.get('/api/tokens/stats', authMiddleware, async (req, res) => {
         monday.setDate(now.getDate() - daysSinceMonday);
         const mondayStr = monday.toISOString().split('T')[0];
         
+        // Find the earliest record on or before Monday
         const weekRow = await dbQuery(
-            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date DESC LIMIT 1',
+            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date ASC LIMIT 1',
+            [workspaceId, mondayStr]
+        );
+        
+        // If no record found before Monday, use the first record of the week
+        const weekStartRow = weekRow.length > 0 ? weekRow : await dbQuery(
+            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date >= ? ORDER BY date ASC LIMIT 1',
             [workspaceId, mondayStr]
         );
         
@@ -1196,15 +1203,22 @@ app.get('/api/tokens/stats', authMiddleware, async (req, res) => {
         const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
         
+        // Find the earliest record on or before the 1st
         const monthRow = await dbQuery(
-            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date DESC LIMIT 1',
+            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date ASC LIMIT 1',
+            [workspaceId, firstDayStr]
+        );
+        
+        // If no record found before the 1st, use the first record of the month
+        const monthStartRow = monthRow.length > 0 ? monthRow : await dbQuery(
+            'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date >= ? ORDER BY date ASC LIMIT 1',
             [workspaceId, firstDayStr]
         );
         
         const currentTotal = todayRow[0]?.total_tokens || 0;
         const yesterdayTotal = yesterdayRow[0]?.total_tokens || 0;
-        const weekStartTotal = weekRow[0]?.total_tokens || 0;
-        const monthStartTotal = monthRow[0]?.total_tokens || 0;
+        const weekStartTotal = weekStartRow[0]?.total_tokens || 0;
+        const monthStartTotal = monthStartRow[0]?.total_tokens || 0;
         
         res.json({
             success: true,
