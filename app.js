@@ -76,6 +76,9 @@ document.addEventListener('DOMContentLoaded', () => {
         document.documentElement.setAttribute('data-theme', 'dark');
     }
     
+    // Initialize mobile gestures
+    initMobileGestures();
+    
     if (authToken) {
         validateToken();
     } else {
@@ -310,6 +313,55 @@ function closeMobileMenu() {
     overlay.classList.remove('active');
     document.body.classList.remove('sidebar-open');
     document.body.style.overflow = '';
+}
+
+// Initialize mobile swipe gestures
+function initMobileGestures() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    if (!sidebar || !overlay) return;
+    
+    let touchStartX = 0;
+    let touchEndX = 0;
+    const minSwipeDistance = 80;
+    
+    // Swipe to close sidebar
+    sidebar.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    }, { passive: true });
+    
+    sidebar.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        handleSwipe();
+    }, { passive: true });
+    
+    // Swipe to open sidebar from edge
+    document.addEventListener('touchstart', (e) => {
+        if (e.changedTouches[0].screenX < 20) {
+            touchStartX = e.changedTouches[0].screenX;
+        }
+    }, { passive: true });
+    
+    document.addEventListener('touchend', (e) => {
+        if (touchStartX < 20) {
+            touchEndX = e.changedTouches[0].screenX;
+            handleEdgeSwipe();
+        }
+    }, { passive: true });
+    
+    function handleSwipe() {
+        const distance = touchEndX - touchStartX;
+        if (distance < -minSwipeDistance && sidebar.classList.contains('open')) {
+            closeMobileMenu();
+        }
+    }
+    
+    function handleEdgeSwipe() {
+        const distance = touchEndX - touchStartX;
+        if (distance > minSwipeDistance && !sidebar.classList.contains('open')) {
+            toggleMobileMenu();
+        }
+    }
 }
 
 // API helper with auth

@@ -2711,6 +2711,43 @@
                 display: none;
             }
             
+            /* Touch feedback improvements */
+            .btn,
+            .nav-item,
+            .mobile-nav-item,
+            .file-row,
+            .cron-card,
+            .user-item,
+            .skill-item,
+            .agent-item,
+            .backup-item {
+                -webkit-tap-highlight-color: transparent;
+                touch-action: manipulation;
+            }
+            
+            .btn:active,
+            .nav-item:active,
+            .mobile-nav-item:active {
+                transform: scale(0.98);
+                opacity: 0.9;
+            }
+            
+            /* Smooth scrolling */
+            html {
+                scroll-behavior: smooth;
+                -webkit-overflow-scrolling: touch;
+            }
+            
+            /* Prevent text selection on UI elements */
+            .btn,
+            .nav-item,
+            .mobile-nav-item,
+            .action-btn,
+            .menu-toggle {
+                -webkit-user-select: none;
+                user-select: none;
+            }
+            
             /* Mobile Bottom Navigation - Flat */
             .mobile-bottom-nav {
                 display: flex;
