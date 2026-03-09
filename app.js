@@ -2069,7 +2069,9 @@ const PERSONA_FILES = [
     { id: 'soul', name: 'SOUL.md', label: '人格定义', description: 'Agent 的核心人格和行为准则' },
     { id: 'memory', name: 'MEMORY.md', label: '长期记忆', description: '需要记住的重要信息和决策' },
     { id: 'user', name: 'USER.md', label: '用户档案', description: '关于用户的信息和偏好' },
-    { id: 'identity', name: 'IDENTITY.md', label: '身份设定', description: 'Agent 的身份和基本信息' }
+    { id: 'identity', name: 'IDENTITY.md', label: '身份设定', description: 'Agent 的身份和基本信息' },
+    { id: 'tools', name: 'TOOLS.md', label: '工具配置', description: '本地工具配置和环境信息' },
+    { id: 'agents', name: 'AGENTS.md', label: '代理配置', description: '代理配置和身份设定' }
 ];
 
 let personaContents = {};
