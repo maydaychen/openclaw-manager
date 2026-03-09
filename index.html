@@ -2705,6 +2705,239 @@
                 font-size: 13px;
             }
         }
+        /* Cron Detail Modal Styles */
+        .cron-detail-modal {
+            max-width: 720px !important;
+        }
+        
+        .cron-detail-modal .modal-body {
+            padding: 28px;
+        }
+        
+        .cron-detail-modal .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .cron-detail-modal .form-group {
+            margin-bottom: 24px;
+        }
+        
+        .cron-detail-modal .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 10px;
+        }
+        
+        .cron-detail-modal .form-group input,
+        .cron-detail-modal .form-group select,
+        .cron-detail-modal .form-group textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1.5px solid var(--border);
+            border-radius: 10px;
+            font-size: 14px;
+            background: var(--bg-base);
+            transition: all 0.2s ease;
+        }
+        
+        .cron-detail-modal .form-group input:focus,
+        .cron-detail-modal .form-group select:focus,
+        .cron-detail-modal .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: var(--bg-card);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        
+        .cron-detail-modal .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+            font-family: inherit;
+            line-height: 1.6;
+        }
+        
+        .cron-detail-modal .info-box {
+            background: var(--bg-elevated);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border-subtle);
+        }
+        
+        .cron-detail-modal .info-box p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+        
+        .cron-detail-modal .info-box p strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .cron-detail-modal .modal-footer {
+            padding: 20px 28px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+        
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 14px 24px;
+            border-radius: 10px;
+            color: white;
+            font-weight: 500;
+            font-size: 14px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            z-index: 9999;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .toast-success {
+            background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+        }
+        
+        .toast-error {
+            background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+        }
+        
+        .toast-info {
+            background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        @keyframes slideOut {
+            from {
+                transform: translateX(0);
+                opacity: 1;
+            }
+            to {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+        }
+        
+        /* Unified Dialog Styles */
+        .dialog-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .dialog {
+            background: var(--bg-card);
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            max-width: 480px;
+            width: 90%;
+            animation: slideUp 0.3s ease;
+        }
+        
+        .dialog-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 24px 24px 0;
+        }
+        
+        .dialog-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .dialog-icon-danger { background: #FEE2E2; }
+        .dialog-icon-warning { background: #FEF3C7; }
+        .dialog-icon-success { background: #D1FAE5; }
+        .dialog-icon-info { background: #DBEAFE; }
+        
+        .dialog-title {
+            flex: 1;
+            font-size: 18px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+        
+        .dialog-close {
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.2s;
+        }
+        
+        .dialog-close:hover {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+        }
+        
+        .dialog-body {
+            padding: 16px 24px 24px;
+        }
+        
+        .dialog-message {
+            font-size: 15px;
+            line-height: 1.6;
+            color: var(--text-secondary);
+        }
+        
+        .dialog-actions {
+            display: flex;
+            gap: 12px;
+            padding: 0 24px 24px;
+            justify-content: flex-end;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes slideUp {
+            from {
+                transform: translateY(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>

@@ -436,7 +436,7 @@ async function saveConfig(newConfig) {
         body: JSON.stringify(newConfig)
     });
     if (response) {
-        alert('配置已保存');
+        showToast('配置已保存', 'success');
     }
 }
 
@@ -488,48 +488,84 @@ async function createBackup(uploadToDrive = false) {
     }
 }
 
+// ==================== Unified Dialog System ====================
+
 // Show custom confirm dialog
-function showConfirmDialog(title, message, onConfirm) {
-    // Remove existing dialog
-    const existing = document.querySelector('.confirm-dialog-overlay');
-    if (existing) existing.remove();
+function showConfirm(title, message, onConfirm, confirmText = '确认', cancelText = '取消', type = 'danger') {
+    closeAllDialogs();
     
     const overlay = document.createElement('div');
-    overlay.className = 'confirm-dialog-overlay';
+    overlay.className = 'dialog-overlay';
     overlay.innerHTML = `
-        <div class="confirm-dialog">
-            <div class="confirm-dialog-header">
-                <h3>${title}</h3>
-                <button class="confirm-dialog-close" onclick="closeConfirmDialog()">✕</button>
+        <div class="dialog dialog-confirm">
+            <div class="dialog-header">
+                <div class="dialog-icon dialog-icon-${type}">${type === 'danger' ? '⚠️' : type === 'warning' ? '⚡' : '💡'}</div>
+                <h3 class="dialog-title">${title}</h3>
+                <button class="dialog-close" onclick="closeAllDialogs()">✕</button>
             </div>
-            <div class="confirm-dialog-body">
-                <p>${message}</p>
+            <div class="dialog-body">
+                <p class="dialog-message">${message}</p>
             </div>
-            <div class="confirm-dialog-actions">
-                <button class="btn btn-secondary" onclick="closeConfirmDialog()">取消</button>
-                <button class="btn btn-danger" id="confirm-dialog-ok">确认重启</button>
+            <div class="dialog-actions">
+                <button class="btn btn-secondary" onclick="closeAllDialogs()">${cancelText}</button>
+                <button class="btn btn-${type}" id="dialog-confirm-btn">${confirmText}</button>
             </div>
         </div>
     `;
     
     document.body.appendChild(overlay);
     
-    // Handle confirm
-    document.getElementById('confirm-dialog-ok').addEventListener('click', () => {
-        closeConfirmDialog();
+    document.getElementById('dialog-confirm-btn').addEventListener('click', () => {
+        closeAllDialogs();
         onConfirm();
     });
     
-    // Close on overlay click
     overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) closeConfirmDialog();
+        if (e.target === overlay) closeAllDialogs();
     });
 }
 
-// Close confirm dialog
+// Show alert dialog
+function showAlert(title, message, type = 'info') {
+    closeAllDialogs();
+    
+    const overlay = document.createElement('div');
+    overlay.className = 'dialog-overlay';
+    overlay.innerHTML = `
+        <div class="dialog dialog-alert">
+            <div class="dialog-header">
+                <div class="dialog-icon dialog-icon-${type}">${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+                <h3 class="dialog-title">${title}</h3>
+                <button class="dialog-close" onclick="closeAllDialogs()">✕</button>
+            </div>
+            <div class="dialog-body">
+                <p class="dialog-message">${message}</p>
+            </div>
+            <div class="dialog-actions">
+                <button class="btn btn-primary" onclick="closeAllDialogs()">确定</button>
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(overlay);
+    
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeAllDialogs();
+    });
+}
+
+// Close all dialogs
+function closeAllDialogs() {
+    document.querySelectorAll('.dialog-overlay, .confirm-dialog-overlay, .modal-overlay').forEach(el => el.remove());
+}
+
+// Legacy compatibility
+function showConfirmDialog(title, message, onConfirm) {
+    showConfirm(title, message, onConfirm, '确认重启', '取消', 'danger');
+}
+
 function closeConfirmDialog() {
-    const overlay = document.querySelector('.confirm-dialog-overlay');
-    if (overlay) overlay.remove();
+    closeAllDialogs();
 }
 
 // Restart gateway
@@ -594,7 +630,7 @@ async function sendMessageToAgent(agentId) {
     });
     
     if (response) {
-        alert('消息已发送');
+        showToast('消息已发送', 'success');
     }
 }
 
@@ -1011,7 +1047,7 @@ function showCronDetail(cronId) {
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.innerHTML = `
-        <div class="modal" style="max-width: 700px; max-height: 90vh; overflow-y: auto;">
+        <div class="modal cron-detail-modal" style="max-width: 720px;">
             <div class="modal-header">
                 <h3>定时任务详情</h3>
                 <button class="modal-close" onclick="closeModal()">✕</button>
@@ -1301,7 +1337,7 @@ async function handleChangePassword(e, username) {
     const data = await response.json();
     if (data.success) {
         closeModal();
-        alert('密码修改成功');
+        showToast('密码修改成功', 'success');
     } else {
         errorEl.textContent = data.error;
     }
@@ -1309,7 +1345,7 @@ async function handleChangePassword(e, username) {
 
 // Delete user
 async function deleteUser(username) {
-    if (!confirm(`确定要删除用户 "${username}" 吗？`)) return;
+    showConfirm('确认删除', `确定要删除用户 "${username}" 吗？`, () => {
     
     const response = await apiFetch(`${API_URL}/users/${username}`, { method: 'DELETE' });
     if (!response) return;
@@ -1318,7 +1354,7 @@ async function deleteUser(username) {
     if (data.success) {
         fetchUsers();
     } else {
-        alert(data.error);
+        showToast(data.error, 'error');
     }
 }
 
@@ -1344,7 +1380,7 @@ async function downloadFile(filepath) {
 
 // Delete file - frontend only, async backend
 async function deleteFile(filepath, rowId) {
-    if (!confirm(`确定要删除 "${filepath}" 吗？`)) return;
+    showConfirm('确认删除', `确定要删除 "${filepath}" 吗？`, () => {
     
     // Remove from UI immediately
     const row = document.getElementById(rowId);
@@ -1370,22 +1406,27 @@ async function toggleCron(id, enabled) {
 
 // Delete cron
 async function deleteCron(id) {
-    if (!confirm('确定要删除这个定时任务吗？')) return;
+    showConfirm('确认删除', '确定要删除这个定时任务吗？', () => {
     const response = await apiFetch(`${API_URL}/crons/${id}`, { method: 'DELETE' });
     if (response) fetchCrons();
 }
 
 // Delete skill
 async function deleteSkill(skillName) {
-    if (!confirm(`确定要删除技能 "${skillName}" 吗？\n\n此操作不可恢复。`)) {
-        return;
-    }
-    
-    const response = await apiFetch(`${API_URL}/skills/${encodeURIComponent(skillName)}`, { method: 'DELETE' });
-    if (response) {
-        showNotification(`技能 "${skillName}" 已删除`, 'success');
-        fetchSkills();
-    }
+    showConfirm(
+        '删除技能',
+        `确定要删除技能 "${skillName}" 吗？<br><br><strong>此操作不可恢复。</strong>`,
+        async () => {
+            const response = await apiFetch(`${API_URL}/skills/${encodeURIComponent(skillName)}`, { method: 'DELETE' });
+            if (response) {
+                showNotification(`技能 "${skillName}" 已删除`, 'success');
+                fetchSkills();
+            }
+        },
+        '删除',
+        '取消',
+        'danger'
+    );
 }
 
 // Render skills page
@@ -1529,7 +1570,7 @@ async function saveConfigFromEditor() {
         const newConfig = JSON.parse(textarea.value);
         await saveConfig(newConfig);
     } catch (e) {
-        alert('JSON 格式错误: ' + e.message);
+        showToast('JSON 格式错误: ' + e.message, 'error');
     }
 }
 
@@ -1660,12 +1701,12 @@ async function spawnAgentSession() {
     const runtime = document.getElementById('spawn-runtime')?.value;
     
     if (!agentId) {
-        alert('请选择一个 Agent');
+        showToast('请选择一个 Agent', 'warning');
         return;
     }
     
     if (!task || !task.trim()) {
-        alert('请输入任务描述');
+        showToast('请输入任务描述', 'warning');
         return;
     }
     
@@ -1678,15 +1719,15 @@ async function spawnAgentSession() {
         const data = await response.json();
         
         if (data.success) {
-            alert('✅ 会话创建成功！');
+            showToast('会话创建成功', 'success');
             document.getElementById('spawn-task').value = '';
             // Refresh agents list
             fetchAgents();
         } else {
-            alert('❌ 创建失败：' + data.error);
+            showToast('创建失败: ' + data.error, 'error');
         }
     } catch (error) {
-        alert('❌ 请求失败：' + error.message);
+        showToast('请求失败: ' + error.message, 'error');
     }
 }
 
@@ -1832,7 +1873,7 @@ function showAgentInfo() {
     const panel = document.getElementById('agent-info-panel');
     
     if (!selectedOption.value) {
-        alert('请先选择一个 Agent');
+        showToast('请先选择一个 Agent', 'warning');
         return;
     }
     
