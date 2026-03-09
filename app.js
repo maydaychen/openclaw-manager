@@ -2528,10 +2528,9 @@ function renderGatewayPage() {
     console.log('Extracted status:', status, 'isRunning:', isRunning);
     
     // Extract other info
-    const gateway = gatewayInfo.gateway || {};
-    const service = gatewayInfo.service || {};
-    const port = gatewayInfo.port || {};
-    const rpc = gatewayInfo.rpc || {};
+    const gateway = gatewayInfo?.gateway || {};
+    const port = gatewayInfo?.port || {};
+    const rpc = gatewayInfo?.rpc || {};
     
     // Get PID and port
     const pid = runtime.pid || '-';
