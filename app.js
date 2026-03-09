@@ -1345,17 +1345,17 @@ async function handleChangePassword(e, username) {
 
 // Delete user
 async function deleteUser(username) {
-    showConfirm('确认删除', `确定要删除用户 "${username}" 吗？`, () => {
-    
-    const response = await apiFetch(`${API_URL}/users/${username}`, { method: 'DELETE' });
-    if (!response) return;
-    
-    const data = await response.json();
-    if (data.success) {
-        fetchUsers();
-    } else {
-        showToast(data.error, 'error');
-    }
+    showConfirm('确认删除', `确定要删除用户 "${username}" 吗？`, async () => {
+        const response = await apiFetch(`${API_URL}/users/${username}`, { method: 'DELETE' });
+        if (!response) return;
+        
+        const data = await response.json();
+        if (data.success) {
+            fetchUsers();
+        } else {
+            showToast(data.error, 'error');
+        }
+    }, '删除', '取消', 'danger');
 }
 
 // Download file
@@ -1381,17 +1381,17 @@ async function downloadFile(filepath) {
 // Delete file - frontend only, async backend
 async function deleteFile(filepath, rowId) {
     showConfirm('确认删除', `确定要删除 "${filepath}" 吗？`, () => {
-    
-    // Remove from UI immediately
-    const row = document.getElementById(rowId);
-    if (row) {
-        row.style.opacity = '0.5';
-        row.style.textDecoration = 'line-through';
-        setTimeout(() => row.remove(), 300);
-    }
-    
-    // Send delete request in background
-    apiFetch(`${API_URL}/files/${encodeURIComponent(filepath)}`, { method: 'DELETE' }).catch(() => {});
+        // Remove from UI immediately
+        const row = document.getElementById(rowId);
+        if (row) {
+            row.style.opacity = '0.5';
+            row.style.textDecoration = 'line-through';
+            setTimeout(() => row.remove(), 300);
+        }
+        
+        // Send delete request in background
+        apiFetch(`${API_URL}/files/${encodeURIComponent(filepath)}`, { method: 'DELETE' }).catch(() => {});
+    }, '删除', '取消', 'danger');
 }
 
 // Toggle cron
@@ -1406,9 +1406,10 @@ async function toggleCron(id, enabled) {
 
 // Delete cron
 async function deleteCron(id) {
-    showConfirm('确认删除', '确定要删除这个定时任务吗？', () => {
-    const response = await apiFetch(`${API_URL}/crons/${id}`, { method: 'DELETE' });
-    if (response) fetchCrons();
+    showConfirm('确认删除', '确定要删除这个定时任务吗？', async () => {
+        const response = await apiFetch(`${API_URL}/crons/${id}`, { method: 'DELETE' });
+        if (response) fetchCrons();
+    }, '删除', '取消', 'danger');
 }
 
 // Delete skill
