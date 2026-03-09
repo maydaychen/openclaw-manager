@@ -2518,10 +2518,16 @@ function renderGatewayPage() {
     
     // Debug: log actual data
     console.log('Gateway Info:', gatewayInfo);
+    console.log('gatewayInfo?.service:', gatewayInfo?.service);
     
     // Extract status from nested structure
     const service = gatewayInfo?.service || {};
+    console.log('service:', service);
+    console.log('service?.runtime:', service?.runtime);
+    
     const runtime = service?.runtime || gatewayInfo?.runtime || {};
+    console.log('runtime:', runtime);
+    
     const status = runtime?.status || runtime?.state || gatewayInfo?.status || 'unknown';
     const isRunning = status === 'running' || status === 'active';
     
