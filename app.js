@@ -749,6 +749,11 @@ function loadPage(page) {
     updateActiveNav();
     updateMobileNav(page);
     
+    // Scroll to top on mobile
+    if (window.innerWidth <= 768) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    
     // Close mobile menu after navigation
     if (window.innerWidth <= 768) {
         closeMobileMenu();
