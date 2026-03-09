@@ -43,13 +43,10 @@ async function dbQuery(sql, params) {
 // Get the directory where server.js is located
 const SERVER_DIR = __dirname;
 
-// Static files
-app.use(express.static(path.join(__dirname)));
-
-// SPA fallback - serve index.html for root path
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
+// CORS and body parsing
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
+app.use(express.text({ type: 'text/plain' }));
 
 // Multiple Workspaces Configuration
 // Static workspaces (fallback)
@@ -1491,6 +1488,14 @@ app.get('/api/tokens/date/:date', authMiddleware, async (req, res) => {
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
     }
+});
+
+// Static files - must be after API routes
+app.use(express.static(path.join(__dirname)));
+
+// SPA fallback - serve index.html for root path
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, '0.0.0.0', () => {
