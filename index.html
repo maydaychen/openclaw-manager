@@ -2615,56 +2615,69 @@
                 right: 0;
                 background: var(--bg-sidebar);
                 border-top: 1px solid var(--border);
-                padding: 8px 16px calc(8px + env(safe-area-inset-bottom));
+                padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
                 z-index: 100;
                 justify-content: space-around;
                 align-items: center;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
             }
             
             .mobile-nav-item {
                 display: flex;
                 flex-direction: column;
                 align-items: center;
-                gap: 4px;
-                padding: 8px 12px;
+                gap: 2px;
+                padding: 6px 8px;
                 color: var(--text-tertiary);
                 text-decoration: none;
-                font-size: 11px;
+                font-size: 10px;
                 transition: all 0.2s;
                 border-radius: var(--radius-sm);
+                flex: 1;
+                max-width: 80px;
+            }
+            
+            .mobile-nav-item:active {
+                background: rgba(79, 172, 254, 0.1);
             }
             
             .mobile-nav-item.active {
                 color: var(--primary);
+                background: rgba(79, 172, 254, 0.1);
             }
             
             .mobile-nav-icon {
-                width: 24px;
-                height: 24px;
+                width: 22px;
+                height: 22px;
             }
             
             .mobile-nav-label {
                 font-weight: 500;
+                white-space: nowrap;
             }
             
             .mobile-nav-add {
                 background: var(--primary);
                 color: white !important;
-                width: 48px;
-                height: 48px;
+                width: 44px;
+                height: 44px;
                 border-radius: 50%;
-                margin-top: -24px;
+                margin-top: -20px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                box-shadow: 0 4px 12px rgba(79, 172, 254, 0.4);
             }
             
             .mobile-nav-add:active {
                 background: var(--primary-hover);
+                transform: scale(0.95);
             }
             
             .mobile-nav-add .mobile-nav-icon {
-                font-size: 24px;
+                width: 24px;
+                height: 24px;
             }
             
             /* Add padding to main content for bottom nav */
@@ -2683,15 +2696,23 @@
         /* Extra small screens */
         @media (max-width: 480px) {
             .main-content {
-                padding: 12px;
+                padding: 68px 12px 80px 12px;
             }
             
             .page-header h1 {
-                font-size: 20px;
+                font-size: 18px;
+            }
+            
+            .page-header p {
+                font-size: 13px;
             }
             
             .stat-value {
-                font-size: 24px;
+                font-size: 22px;
+            }
+            
+            .stat-title {
+                font-size: 12px;
             }
             
             .file-list-header,
@@ -2703,6 +2724,61 @@
             .action-btn {
                 padding: 8px 12px;
                 font-size: 13px;
+                min-height: 40px;
+            }
+            
+            /* Mobile card improvements */
+            .stat-card {
+                padding: 16px;
+                border-radius: 12px;
+            }
+            
+            .cron-card,
+            .user-item,
+            .skill-item,
+            .agent-item,
+            .backup-item {
+                padding: 14px;
+                border-radius: 12px;
+            }
+            
+            /* Better touch targets */
+            .btn {
+                min-height: 44px;
+                padding: 10px 16px;
+            }
+            
+            .btn-sm {
+                min-height: 36px;
+                padding: 8px 12px;
+            }
+            
+            /* Dialog improvements */
+            .dialog {
+                width: calc(100% - 24px);
+                margin: 12px;
+                max-height: calc(100vh - 100px);
+            }
+            
+            .dialog-actions {
+                flex-direction: column-reverse;
+                gap: 8px;
+            }
+            
+            .dialog-actions .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+        
+        /* Large mobile / small tablet */
+        @media (min-width: 481px) and (max-width: 768px) {
+            .main-content {
+                padding: 72px 20px 80px 20px;
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
         /* Cron Detail Modal Styles */
