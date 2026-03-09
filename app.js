@@ -2516,7 +2516,9 @@ async function fetchGatewayInfo() {
 function renderGatewayPage() {
     const container = document.getElementById('gateway-content');
     
-    const status = gatewayInfo.status || 'unknown';
+    // Extract status from nested structure
+    const runtime = gatewayInfo.service?.runtime || gatewayInfo.runtime || {};
+    const status = runtime.status || runtime.state || gatewayInfo.status || 'unknown';
     const isRunning = status === 'running' || status === 'active';
     
     container.innerHTML = `
