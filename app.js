@@ -571,9 +571,9 @@ function showConfirm(title, message, onConfirm, confirmText = '确认', cancelTe
     
     document.body.appendChild(overlay);
     
-    document.getElementById('dialog-confirm-btn').addEventListener('click', () => {
+    document.getElementById('dialog-confirm-btn').addEventListener('click', async () => {
         closeAllDialogs();
-        onConfirm();
+        await onConfirm();
     });
     
     overlay.addEventListener('click', (e) => {
