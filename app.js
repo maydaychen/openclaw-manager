@@ -2521,6 +2521,18 @@ function renderGatewayPage() {
     const status = runtime.status || runtime.state || gatewayInfo.status || 'unknown';
     const isRunning = status === 'running' || status === 'active';
     
+    // Extract other info
+    const gateway = gatewayInfo.gateway || {};
+    const service = gatewayInfo.service || {};
+    const port = gatewayInfo.port || {};
+    const rpc = gatewayInfo.rpc || {};
+    
+    // Get PID and port
+    const pid = runtime.pid || '-';
+    const portNum = gateway.port || port.port || '-';
+    const bindHost = gateway.bindHost || '127.0.0.1';
+    const probeUrl = gateway.probeUrl || rpc.url || '-';
+    
     container.innerHTML = `
         <div class="toolbar">
             <button class="btn btn-secondary" onclick="fetchGatewayInfo()">${icon('refresh', 16)} 刷新</button>
@@ -2535,23 +2547,23 @@ function renderGatewayPage() {
                 <div class="stat-value" style="font-size: 24px; margin-top: 12px;">
                     ${isRunning ? '<span class="text-success">运行中</span>' : '<span class="text-danger">已停止</span>'}
                 </div>
-                <div class="stat-subtitle">服务状态</div>
+                <div class="stat-subtitle">${isRunning ? `PID: ${pid}` : '服务状态'}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <span class="stat-title">版本</span>
+                    <span class="stat-title">端口</span>
                     <div class="stat-icon icon-blue">${icon('info', 24)}</div>
                 </div>
-                <div class="stat-value" style="font-size: 20px; margin-top: 16px;">${gatewayInfo.version || '-'}</div>
-                <div class="stat-subtitle">OpenClaw 版本</div>
+                <div class="stat-value" style="font-size: 20px; margin-top: 16px;">${portNum}</div>
+                <div class="stat-subtitle">${bindHost}</div>
             </div>
             <div class="stat-card">
                 <div class="stat-header">
-                    <span class="stat-title">运行时间</span>
+                    <span class="stat-title">RPC 地址</span>
                     <div class="stat-icon icon-purple">${icon('clock', 24)}</div>
                 </div>
-                <div class="stat-value" style="font-size: 20px; margin-top: 16px;">${gatewayInfo.uptime || '-'}</div>
-                <div class="stat-subtitle">自启动以来</div>
+                <div class="stat-value" style="font-size: 14px; margin-top: 16px; word-break: break-all;">${probeUrl}</div>
+                <div class="stat-subtitle">WebSocket 连接</div>
             </div>
         </div>
         <div class="gateway-config">
