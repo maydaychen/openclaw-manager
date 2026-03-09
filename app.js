@@ -733,10 +733,6 @@ function renderSidebar() {
         </nav>
         <div class="sidebar-section-title">高级功能</div>
         <nav class="sidebar-nav">
-            <a href="#" class="nav-item ${currentPage === 'conversations' ? 'active' : ''}" onclick="loadPage('conversations'); return false;" data-page="conversations">
-                ${icon('message', 20)}
-                <span class="nav-text">会话监控</span>
-            </a>
             <a href="#" class="nav-item ${currentPage === 'analytics' ? 'active' : ''}" onclick="loadPage('analytics'); return false;" data-page="analytics">
                 ${icon('chart', 20)}
                 <span class="nav-text">性能分析</span>
@@ -774,7 +770,6 @@ function renderMainContent() {
         config: ['系统配置', '管理 OpenClaw 配置文件'],
         backups: ['备份管理', '创建和恢复系统备份'],
         agents: ['Agent 监控', '查看所有 Agent 运行状态'],
-        conversations: ['会话监控', '实时查看活跃对话'],
         analytics: ['性能分析', 'Token 使用统计和趋势'],
         souleditor: ['人格与配置', '编辑 SOUL、MEMORY、USER、IDENTITY'],
         gateway: ['Gateway 管理', '查看 Gateway 状态和配置']

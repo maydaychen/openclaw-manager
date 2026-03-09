@@ -12,5 +12,20 @@
   },
   "jwt": {
     "secret": "your-jwt-secret-key"
+  },
+  "backup": {
+    "googleDrive": {
+      "enabled": false,
+      "tokenPath": "/home/your-user/.config/gogcli/token.pickle",
+      "folderName": "OpenClaw备份"
+    },
+    "local": {
+      "enabled": true,
+      "path": "./backups"
+    },
+    "nas": {
+      "enabled": false,
+      "path": "/mnt/nas/openclaw-backups"
+    }
   }
 }

@@ -852,11 +852,13 @@ app.post('/api/backups/create', authMiddleware, async (req, res) => {
         // Upload to Google Drive if requested
         if (uploadToDrive) {
             try {
-                const scriptPath = '/home/chenyi/.openclaw/workspace/scripts/python/backup_to_drive.py';
-                const { stdout, stderr } = await execAsync(`python3 "${scriptPath}" ${workspaceId}`);
+                // Use config-based script
+                const scriptPath = path.join(__dirname, 'scripts', 'backup_to_drive.py');
+                const configPath = path.join(__dirname, 'config.json');
+                const { stdout, stderr } = await execAsync(`python3 "${scriptPath}" ${workspaceId} --config "${configPath}" --backup-path "${backupPath}"`);
                 
                 // Parse output for file ID
-                const match = stdout.match(/Drive ID: ([\w-]+)/);
+                const match = stdout.match(/ID: ([\w-]+)/);
                 if (match) {
                     driveInfo = {
                         fileId: match[1],
@@ -880,7 +882,82 @@ app.post('/api/backups/create', authMiddleware, async (req, res) => {
     }
 });
 
-// Agents API - get available agents (from openclaw agents list)
+// Get backup configuration
+app.get('/api/backups/config', authMiddleware, async (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        let config = {};
+        try {
+            const configData = await fs.readFile(configPath, 'utf8');
+            config = JSON.parse(configData);
+        } catch (e) {
+            // Config file doesn't exist or is invalid
+        }
+        
+        // Return only non-sensitive backup config
+        const backupConfig = config.backup || {
+            googleDrive: { enabled: false },
+            local: { enabled: true, path: './backups' },
+            nas: { enabled: false }
+        };
+        
+        // Mask sensitive paths
+        if (backupConfig.googleDrive?.tokenPath) {
+            backupConfig.googleDrive.tokenPath = '***configured***';
+        }
+        
+        res.json({
+            success: true,
+            config: backupConfig
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
+// Update backup configuration
+app.put('/api/backups/config', authMiddleware, async (req, res) => {
+    try {
+        const configPath = path.join(__dirname, 'config.json');
+        let config = {};
+        
+        // Read existing config
+        try {
+            const configData = await fs.readFile(configPath, 'utf8');
+            config = JSON.parse(configData);
+        } catch (e) {
+            // Config file doesn't exist, create new
+        }
+        
+        // Update backup config
+        const { googleDrive, local, nas } = req.body;
+        config.backup = {
+            googleDrive: {
+                enabled: googleDrive?.enabled || false,
+                tokenPath: googleDrive?.tokenPath || config.backup?.googleDrive?.tokenPath || '',
+                folderName: googleDrive?.folderName || 'OpenClaw备份'
+            },
+            local: {
+                enabled: local?.enabled !== false, // default true
+                path: local?.path || './backups'
+            },
+            nas: {
+                enabled: nas?.enabled || false,
+                path: nas?.path || ''
+            }
+        };
+        
+        // Save config
+        await fs.writeFile(configPath, JSON.stringify(config, null, 2));
+        
+        res.json({
+            success: true,
+            message: 'Backup configuration updated'
+        });
+    } catch (error) {
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
 app.get('/api/agents/list', authMiddleware, async (req, res) => {
     try {
         const { stdout } = await execAsync('/home/chenyi/.npm-global/bin/openclaw agents list 2>/dev/null || echo ""');
