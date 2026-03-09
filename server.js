@@ -1179,24 +1179,26 @@ app.get('/api/tokens/stats', authMiddleware, async (req, res) => {
             [workspaceId, yesterdayStr]
         );
         
-        // Get 7 days ago for weekly stats
-        const weekAgo = new Date();
-        weekAgo.setDate(weekAgo.getDate() - 7);
-        const weekAgoStr = weekAgo.toISOString().split('T')[0];
+        // Get this week's start (Monday) for weekly stats
+        const now = new Date();
+        const dayOfWeek = now.getDay(); // 0 = Sunday, 1 = Monday, ...
+        const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+        const monday = new Date(now);
+        monday.setDate(now.getDate() - daysSinceMonday);
+        const mondayStr = monday.toISOString().split('T')[0];
         
         const weekRow = await dbQuery(
             'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date DESC LIMIT 1',
-            [workspaceId, weekAgoStr]
+            [workspaceId, mondayStr]
         );
         
-        // Get 30 days ago for monthly stats
-        const monthAgo = new Date();
-        monthAgo.setDate(monthAgo.getDate() - 30);
-        const monthAgoStr = monthAgo.toISOString().split('T')[0];
+        // Get this month's start (1st day) for monthly stats
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const firstDayStr = firstDayOfMonth.toISOString().split('T')[0];
         
         const monthRow = await dbQuery(
             'SELECT total_tokens FROM token_usage WHERE workspace = ? AND date <= ? ORDER BY date DESC LIMIT 1',
-            [workspaceId, monthAgoStr]
+            [workspaceId, firstDayStr]
         );
         
         const currentTotal = todayRow[0]?.total_tokens || 0;
