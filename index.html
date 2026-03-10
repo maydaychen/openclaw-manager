@@ -6,6 +6,7 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <title>OpenClaw Manager</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦞</text></svg>">
+    <link rel="stylesheet" href="mobile-width-fix-v2.css?v=1">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         
@@ -3207,9 +3208,6 @@
         <a href="#" class="mobile-nav-item ${currentPage === 'files' ? 'active' : ''}" onclick="loadPage('files'); return false;" data-page="files">
             <span class="mobile-nav-icon">📁</span>
             <span class="mobile-nav-label">文件</span>
-        </a>
-        <a href="#" class="mobile-nav-item mobile-nav-add" onclick="showQuickActions(); return false;">
-            <span class="mobile-nav-icon">➕</span>
         </a>
         <a href="#" class="mobile-nav-item ${currentPage === 'cron' ? 'active' : ''}" onclick="loadPage('cron'); return false;" data-page="cron">
             <span class="mobile-nav-icon">⏰</span>

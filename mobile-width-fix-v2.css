@@ -1,0 +1,228 @@
+/* 严格限制移动端页面宽度为屏幕宽度 - 完整修复版 */
+
+@media (max-width: 768px) {
+    /* 强制所有容器元素不超过屏幕宽度 */
+    body, html {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        overflow-x: hidden !important;
+    }
+    
+    /* 主内容区域严格限制 */
+    .main-content {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        margin-left: 0 !important;
+        padding: 72px 16px 80px 16px !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 防止任何子元素溢出 */
+    .main-content * {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 修复仪表盘网格布局 */
+    .dashboard-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    /* 修复统计卡片 */
+    .stat-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        padding: 20px !important;
+    }
+    
+    /* 修复快速操作按钮 */
+    .action-buttons {
+        flex-wrap: wrap !important;
+    }
+    
+    .action-btn-large {
+        width: 100% !important;
+        margin-bottom: 8px !important;
+    }
+    
+    /* 修复文件浏览器 */
+    .file-browser {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+    
+    /* 修复定时任务列表 */
+    .cron-list {
+        width: 100% !important;
+    }
+    
+    .cron-card {
+        width: 100% !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+    
+    /* 修复技能管理 */
+    .skills-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .skill-card {
+        width: 100% !important;
+        min-height: auto !important;
+    }
+    
+    /* 修复日志查看器 */
+    .log-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* 修复配置编辑器 */
+    .config-editor {
+        width: 100% !important;
+    }
+    
+    .config-textarea {
+        width: 100% !important;
+        min-height: 300px !important;
+    }
+    
+    /* 修复备份管理 */
+    .backups-list {
+        width: 100% !important;
+    }
+    
+    .backup-card {
+        width: 100% !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+    
+    /* 修复人格编辑器 - 关键修复 */
+    .persona-editor {
+        width: 100% !important;
+        height: calc(100vh - 200px) !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    .persona-tabs {
+        width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    .persona-toolbar {
+        width: 100% !important;
+        flex-wrap: wrap !important;
+    }
+    
+    .persona-editor-pane {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow: hidden !important;
+    }
+    
+    .persona-textarea {
+        width: 100% !important;
+        height: 100% !important;
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+        word-wrap: break-word !important;
+        overflow-wrap: break-word !important;
+    }
+    
+    /* 修复用户管理 */
+    .users-list {
+        width: 100% !important;
+    }
+    
+    .user-card {
+        width: 100% !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 12px !important;
+        padding: 16px !important;
+    }
+    
+    /* 修复 Agent 监控 */
+    .agents-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    .agent-card {
+        width: 100% !important;
+        min-height: auto !important;
+    }
+    
+    /* 修复性能分析 */
+    .analytics-section {
+        width: 100% !important;
+    }
+    
+    .token-ranking {
+        width: 100% !important;
+    }
+    
+    .ranking-item {
+        width: 100% !important;
+    }
+    
+    /* 修复网关管理 */
+    .gateway-grid {
+        grid-template-columns: 1fr !important;
+        gap: 16px !important;
+    }
+    
+    /* 移除所有可能的横向滚动 */
+    .table-container,
+    .data-table {
+        width: 100% !important;
+        max-width: 100% !important;
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
+    }
+    
+    /* 确保所有按钮和交互元素适配 */
+    .btn,
+    .nav-item,
+    .mobile-nav-item {
+        max-width: 100% !important;
+        box-sizing: border-box !important;
+    }
+    
+    /* 修复对话框 */
+    .dialog,
+    .modal,
+    .confirm-dialog {
+        width: 95% !important;
+        max-width: 95% !important;
+        margin: 12px !important;
+    }
+    
+    /* 修复底部导航栏 */
+    .mobile-bottom-nav {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        left: 0 !important;
+        right: 0 !important;
+        padding: 6px 8px calc(6px + env(safe-area-inset-bottom)) !important;
+        box-sizing: border-box !important;
+    }
+    
+    .mobile-nav-item {
+        flex: 1 !important;
+        max-width: none !important;
+        min-width: 0 !important;
+    }
+}
