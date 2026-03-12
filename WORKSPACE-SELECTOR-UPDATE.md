@@ -27,9 +27,9 @@
 
 ### 自动检测 workspace
 Manager 会自动从 `openclaw agents list` 命令中提取所有 workspace：
-- `default` → `~/.openclaw/workspace`
-- `workspace-mom-creator` → `~/.openclaw/workspace-mom-creator`
-- `workspace-infra-manager` → `~/.openclaw/workspace-infra-manager`
+- `default` → `~/workspace`
+- `workspace-mom-creator` → `~/workspace-mom-creator`
+- `workspace-infra-manager` → `~/workspace-infra-manager`
 - 以及其他任何 agent 使用的 workspace
 
 ### Workspace 选择器

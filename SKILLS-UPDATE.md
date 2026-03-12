@@ -119,14 +119,14 @@
 ## 📊 技能统计
 
 ### 全局技能（default workspace）
-位于 `~/.openclaw/workspace/skills/`
+位于 `~/workspace/skills/`
 - 所有 agent 共享
 - 优先级最高
 
 ### 工作空间技能
 位于各个 workspace 的 `skills/` 目录：
-- `~/.openclaw/workspace-mom-creator/skills/`
-- `~/.openclaw/workspace-infra-manager/skills/`
+- `~/workspace-mom-creator/skills/`
+- `~/workspace-infra-manager/skills/`
 - 仅 해당 workspace 的 agent 可用
 
 ---

@@ -16,7 +16,7 @@
    - 所有 agent 共享
    - 标签：🌍 全局 (~/.openclaw)
 
-2. **中等优先级**: `~/.openclaw/workspace/skills/`
+2. **中等优先级**: `~/workspace/skills/`
    - Default workspace 的技能
    - 标签：📂 Default Workspace
 
