@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
 1. **重启 Manager 服务**:
    ```bash
-   cd /home/chenyi/.openclaw/workspace/projects/openclaw-manager
+   cd /path/to/openclaw-manager
    pkill -f "node server.js"
    nohup node server.js > server.log 2>&1 &
    ```

@@ -1,7 +1,7 @@
 # 全局技能目录支持
 
 **更新日期**: 2026-03-04  
-**功能**: 添加 `/home/chenyi/.openclaw/skills` 全局技能目录支持
+**功能**: 添加 `~/.openclaw/skills` 全局技能目录支持
 
 ---
 
@@ -11,12 +11,12 @@
 
 现在 Manager 会扫描以下目录的技能（按优先级排序）：
 
-1. **最高优先级**: `/home/chenyi/.openclaw/skills/`
+1. **最高优先级**: `~/.openclaw/skills/`
    - 全局技能目录
    - 所有 agent 共享
    - 标签：🌍 全局 (~/.openclaw)
 
-2. **中等优先级**: `/home/chenyi/.openclaw/workspace/skills/`
+2. **中等优先级**: `~/.openclaw/workspace/skills/`
    - Default workspace 的技能
    - 标签：📂 Default Workspace
 

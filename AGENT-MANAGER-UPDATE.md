@@ -80,7 +80,7 @@ GET /api/agents/list
       "name": "main",
       "isDefault": true,
       "identity": "🤖 Haro (IDENTITY.md)",
-      "workspace": "~/.openclaw/workspace",
+      "workspace": "~/workspace",
       "model": "alibaba-cloud/qwen3-max-2026-01-23",
       "routingRules": 0
     },
@@ -89,7 +89,7 @@ GET /api/agents/list
       "name": "mom-creator",
       "isDefault": false,
       "identity": "👶 母婴博主 (config)",
-      "workspace": "~/.openclaw/workspace-mom-creator",
+      "workspace": "~/workspace-mom-creator",
       "model": "alibaba-cloud/qwen3.5-plus",
       "routingRules": 1
     }
